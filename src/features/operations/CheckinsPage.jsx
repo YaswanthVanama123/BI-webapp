@@ -16,24 +16,24 @@ const stopColumns = [
   { key: 'checkIn', header: 'Check-in', render: (r) => r.checkIn || '-' },
   { key: 'checkOut', header: 'Check-out', render: (r) => r.checkOut || '-' },
   { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => (r.serviceMinutes != null ? formatMinutes(r.serviceMinutes) : '-'), csv: (r) => r.serviceMinutes },
-  { key: 'sourceElapsedMinutes', header: 'Source elapsed', align: 'right', render: (r) => (r.sourceElapsedMinutes != null ? formatMinutes(r.sourceElapsedMinutes) : '-'), csv: (r) => r.sourceElapsedMinutes },
+  { key: 'gapToNextMinutes', header: 'Idle to next', align: 'right', render: (r) => (r.gapToNextMinutes != null ? formatMinutes(r.gapToNextMinutes) : '-'), csv: (r) => r.gapToNextMinutes },
   { key: 'elapsedStatus', header: 'Check', render: (r) => <Badge tone={statusTone(r.elapsedStatus)}>{r.elapsedStatus}</Badge> },
-  { key: 'gapToNextMinutes', header: 'Gap to next', align: 'right', render: (r) => (r.gapToNextMinutes != null ? formatMinutes(r.gapToNextMinutes) : '-'), csv: (r) => r.gapToNextMinutes },
 ];
 
-const techSummaryColumns = [
+const routeSummaryColumns = [
   { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
-  { key: 'technician', header: 'Technician' },
+  { key: 'route', header: 'Route' },
   { key: 'stopCount', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stopCount) },
+  { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : '-'), csv: (r) => (r.invoiceNumbers || []).join(' ') },
   { key: 'firstCheckIn', header: 'First in', render: (r) => r.firstCheckIn || '-' },
   { key: 'lastCheckOut', header: 'Last out', render: (r) => r.lastCheckOut || '-' },
   { key: 'spanMinutes', header: 'Day span', align: 'right', render: (r) => (r.spanMinutes != null ? formatMinutes(r.spanMinutes) : '-'), csv: (r) => r.spanMinutes },
   { key: 'totalServiceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.totalServiceMinutes) },
-  { key: 'totalGapMinutes', header: 'Idle gap', align: 'right', render: (r) => formatMinutes(r.totalGapMinutes || 0) },
+  { key: 'totalGapMinutes', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.totalGapMinutes || 0) },
   {
     key: 'servicePct', header: 'Service % of day', align: 'right',
-    render: (r) => { const p = r.spanMinutes ? (r.totalServiceMinutes / r.spanMinutes) * 100 : null; return p != null ? <Badge tone={p >= 60 ? 'success' : 'warning'}>{formatPercent(p)}</Badge> : '-'; },
-    csv: (r) => (r.spanMinutes ? Math.round((r.totalServiceMinutes / r.spanMinutes) * 1000) / 10 : ''),
+    render: (r) => (r.servicePct != null ? <Badge tone={r.servicePct >= 60 ? 'success' : 'warning'}>{formatPercent(r.servicePct)}</Badge> : '-'),
+    csv: (r) => r.servicePct,
   },
   { key: 'flaggedStops', header: 'Flagged', align: 'right', render: (r) => (r.flaggedStops ? <Badge tone="warning">{r.flaggedStops}</Badge> : '0') },
 ];
@@ -41,15 +41,15 @@ const techSummaryColumns = [
 export default function Checkins() {
   const opts = useApi(() => biService.checkinOptions(), []);
   const [range, setRange] = useState(defaultRange());
-  const [tech, setTech] = useState('all');
+  const [route, setRoute] = useState('all');
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(
-    () => (from && to ? biService.checkins({ from, to, technician: tech }) : Promise.resolve({ data: [] })),
-    [from, to, tech],
+    () => (from && to ? biService.checkins({ from, to, route }) : Promise.resolve({ data: [] })),
+    [from, to, route],
   );
 
-  const technicians = (opts.data && opts.data.technicians) || [];
+  const routes = (opts.data && opts.data.routes) || [];
   const earliest = opts.data && opts.data.earliestDate;
   const latest = opts.data && opts.data.latestDate;
   const groups = data || [];
@@ -59,26 +59,28 @@ export default function Checkins() {
     const totalStops = groups.reduce((t, g) => t + g.stopCount, 0);
     const totalService = groups.reduce((t, g) => t + (g.totalServiceMinutes || 0), 0);
     const totalGap = groups.reduce((t, g) => t + (g.totalGapMinutes || 0), 0);
+    const totalSpan = groups.reduce((t, g) => t + (g.spanMinutes || 0), 0);
     const flagged = groups.reduce((t, g) => t + (g.flaggedStops || 0), 0);
-    const techsSet = new Set(groups.map((g) => g.technician));
+    const routesSet = new Set(groups.map((g) => g.route));
     const daysSet = new Set(groups.map((g) => g.date));
     return {
-      techs: techsSet.size,
+      routes: routesSet.size,
       days: daysSet.size,
       totalStops,
       totalService,
       avgServicePerStop: totalStops ? totalService / totalStops : 0,
       totalGap,
       flagged,
+      servicePct: totalSpan ? (totalService / totalSpan) * 100 : 0,
     };
   }, [groups]);
 
-  const perTech = useMemo(() => {
+  const perRoute = useMemo(() => {
     const m = new Map();
     for (const g of groups) {
-      const a = m.get(g.technician) || { technician: g.technician, stops: 0, service: 0, gap: 0 };
+      const a = m.get(g.route) || { route: g.route, stops: 0, service: 0, gap: 0 };
       a.stops += g.stopCount; a.service += g.totalServiceMinutes || 0; a.gap += g.totalGapMinutes || 0;
-      m.set(g.technician, a);
+      m.set(g.route, a);
     }
     return [...m.values()].sort((a, b) => b.stops - a.stops);
   }, [groups]);
@@ -91,15 +93,15 @@ export default function Checkins() {
 
   return (
     <div>
-      <PageHeader title="Check-in / Check-out" subtitle="Technician check-in/out per stop from RouteStar arrival & departure times (read directly, per day)." />
+      <PageHeader title="Check-in / Check-out" subtitle="Per route (NRV1…) per day: day span = first arrival → last departure; idle = gaps between consecutive stops; service% = on-site ÷ day span." />
 
       <div className="card p-3 mb-5 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={earliest} max={latest} />
         <label className="flex flex-col">
-          <span className="field-label">Technician</span>
-          <select className="field" value={tech} onChange={(e) => setTech(e.target.value)}>
-            <option value="all">All technicians</option>
-            {technicians.map((t) => <option key={t} value={t}>{t}</option>)}
+          <span className="field-label">Route</span>
+          <select className="field" value={route} onChange={(e) => setRoute(e.target.value)}>
+            <option value="all">All routes</option>
+            {routes.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         </label>
         {latest && <span className="text-xs text-dark-400 pb-2">data: {formatDateShort(earliest)} – {formatDateShort(latest)}</span>}
@@ -110,37 +112,38 @@ export default function Checkins() {
         {() => (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
-              <StatCard label="Technicians" value={formatNumber(kpi.techs)} sublabel={`${formatNumber(kpi.days)} day(s)`} tone="info" />
+              <StatCard label="Routes" value={formatNumber(kpi.routes)} sublabel={`${formatNumber(kpi.days)} day(s)`} tone="info" />
               <StatCard label="Stops" value={formatNumber(kpi.totalStops)} tone="success" />
               <StatCard label="Service time" value={formatMinutes(kpi.totalService)} sublabel="on-site" />
               <StatCard label="Avg / stop" value={formatMinutes(kpi.avgServicePerStop)} />
               <StatCard label="Idle between stops" value={formatMinutes(kpi.totalGap)} tone="warning" />
-              <StatCard label="Flagged stops" value={formatNumber(kpi.flagged)} sublabel="variance/negative/missing" tone={kpi.flagged ? 'warning' : 'success'} />
+              <StatCard label="Service % of day" value={formatPercent(kpi.servicePct)} tone={kpi.servicePct >= 60 ? 'success' : 'warning'} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <BarChartCard title="Stops per technician" subtitle="total over range" data={perTech} xKey="technician" bars={[{ key: 'stops', label: 'Stops' }]} />
-              <BarChartCard title="Time on-site vs idle between stops (min)" subtitle="over range" data={perTech} xKey="technician"
-                bars={[{ key: 'service', label: 'Service (min)', color: '#10B981', stackId: 't' }, { key: 'gap', label: 'Idle gap (min)', color: '#F59E0B', stackId: 't' }]} />
+              <BarChartCard title="Stops per route" subtitle="total over range" data={perRoute} xKey="route" bars={[{ key: 'stops', label: 'Stops' }]} />
+              <BarChartCard title="Time on-site vs idle between stops (min)" subtitle="over range" data={perRoute} xKey="route"
+                bars={[{ key: 'service', label: 'Service (min)', color: '#10B981', stackId: 't' }, { key: 'gap', label: 'Idle (min)', color: '#F59E0B', stackId: 't' }]} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <PieChartCard title="Elapsed-time check" subtitle="source vs computed" data={statusData} nameKey="name" valueKey="value" />
               <div className="lg:col-span-2">
-                <DataTable columns={techSummaryColumns} rows={groups} exportFilename={`checkins-summary-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} />
+                <DataTable columns={routeSummaryColumns} rows={groups} exportFilename={`checkins-summary-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} />
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-dark-700 mb-2">Stop detail</h3>
+              <h3 className="text-sm font-semibold text-dark-700 mb-2">Stop detail (by route / day)</h3>
               <div className="space-y-4">
                 {groups.map((g) => (
-                  <Card key={`${g.technician}|${g.date}`} className="p-0 overflow-hidden">
+                  <Card key={`${g.route}|${g.date}`} className="p-0 overflow-hidden">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dark-100 px-4 py-3">
-                      <div className="font-semibold text-dark-800">{g.technician}</div>
+                      <div className="font-semibold text-dark-800">Route {g.route}</div>
                       <div className="flex items-center gap-4 text-xs text-dark-500">
                         <span>{formatDateShort(g.date)}</span>
                         <span>{formatNumber(g.stopCount)} stops</span>
+                        <span>span {g.spanMinutes != null ? formatMinutes(g.spanMinutes) : '-'}</span>
                         <span>service {formatMinutes(g.totalServiceMinutes)}</span>
                         <span>idle {formatMinutes(g.totalGapMinutes || 0)}</span>
                         <span>{g.firstCheckIn || '-'} → {g.lastCheckOut || '-'}</span>
