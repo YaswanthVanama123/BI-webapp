@@ -34,7 +34,6 @@ export default function SyncStatus() {
 
   const refetch = useCallback(() => { reload(); setTick((t) => t + 1); }, [reload]);
 
-  // Auto-refresh every 5s while a job is in progress.
   useEffect(() => {
     if (!running.length) { if (pollRef.current) clearInterval(pollRef.current); return undefined; }
     pollRef.current = setInterval(() => reload(), 5000);

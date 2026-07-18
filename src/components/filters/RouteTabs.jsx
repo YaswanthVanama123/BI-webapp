@@ -1,7 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
 
-// Horizontal route (= technician) tab bar. `routes` = code list; value '' / 'all' means all routes.
 export function RouteTabs({ routes = [], value, onChange, allLabel = 'All routes', className }) {
   const active = value || 'all';
   const tabs = ['all', ...routes];
