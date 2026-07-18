@@ -9,7 +9,7 @@ export function DateRangeFilter({ value, onChange, min, max, className }) {
 
   const selectPreset = (p) => {
     if (p === 'custom') { onChange({ preset: 'custom', from, to }); return; }
-    const r = rangeForPreset(p);
+    const r = rangeForPreset(p, undefined, { min, max });
     onChange({ preset: p, from: r.from, to: r.to });
   };
 

@@ -28,6 +28,7 @@ const lineColumns = [
   { key: 'quantity', header: 'Qty', align: 'right', render: (r) => formatNumber(r.quantity) },
   { key: 'rate', header: 'Rate', align: 'right', render: (r) => formatCurrency(r.rate) },
   { key: 'amount', header: 'Amount', align: 'right', render: (r) => formatCurrency(r.amount) },
+  { key: 'frequency', header: 'Frequency', render: (r) => r.frequency || '—' },
   { key: 'class', header: 'Class' },
   { key: 'warehouse', header: 'Warehouse' },
   { key: 'taxCode', header: 'Tax' },

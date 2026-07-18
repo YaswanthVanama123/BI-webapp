@@ -5,6 +5,7 @@ import { PageHeader, StatCard, Badge, Card } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
+import RouteTabs from '@/components/filters/RouteTabs';
 import { defaultRange } from '@/utils/dateRanges';
 import { BarChartCard, PieChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber, formatPercent, formatDateShort, statusTone } from '@/utils/format';
@@ -95,18 +96,12 @@ export default function Checkins() {
     <div>
       <PageHeader title="Check-in / Check-out" subtitle="Per route (NRV1…) per day: day span = first arrival → last departure; idle = gaps between consecutive stops; service% = on-site ÷ day span." />
 
-      <div className="card p-3 mb-5 flex flex-wrap items-end gap-3">
+      <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={earliest} max={latest} />
-        <label className="flex flex-col">
-          <span className="field-label">Route</span>
-          <select className="field" value={route} onChange={(e) => setRoute(e.target.value)}>
-            <option value="all">All routes</option>
-            {routes.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </label>
         {latest && <span className="text-xs text-dark-400 pb-2">data: {formatDateShort(earliest)} – {formatDateShort(latest)}</span>}
         {rangeError && <span className="text-xs text-danger-600 pb-2">“From” is after “To”.</span>}
       </div>
+      <RouteTabs routes={routes} value={route} onChange={setRoute} className="mb-5" />
 
       <AsyncSection loading={loading || opts.loading} error={error} data={data} reload={reload} minEmpty>
         {() => (
@@ -149,7 +144,7 @@ export default function Checkins() {
                         <span>{g.firstCheckIn || '-'} → {g.lastCheckOut || '-'}</span>
                       </div>
                     </div>
-                    <DataTable columns={stopColumns} rows={g.stops.map((s, i) => ({ ...s, __seq: i + 1 }))} exportable={false} paginated={false} />
+                    <DataTable columns={stopColumns} rows={g.stops.map((s, i) => ({ ...s, __seq: i + 1 }))} exportFilename={`checkins-${g.route}-${g.date}`} paginated={false} />
                   </Card>
                 ))}
               </div>

@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
-import { PageHeader, StatCard } from '@/components/ui';
+import { PageHeader, StatCard, Badge, Card } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
+import RouteTabs from '@/components/filters/RouteTabs';
 import { defaultRange } from '@/utils/dateRanges';
 import { BarChartCard, PieChartCard } from '@/components/charts';
-import { formatMinutes, formatNumber, formatPercent } from '@/utils/format';
+import { formatMinutes, formatNumber, formatPercent, formatDateShort } from '@/utils/format';
 
 const GRANULARITIES = ['day', 'week', 'month'];
 
@@ -26,6 +27,17 @@ const mkColumns = (keyName, keyHeader) => [
   { key: 'legs', header: 'Legs', align: 'right', render: (r) => formatNumber(r.legs) },
 ];
 
+const dayColumns = [
+  { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
+  { key: 'routeCode', header: 'Route' },
+  { key: 'stops', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stops) },
+  { key: 'legs', header: 'Legs', align: 'right', render: (r) => formatNumber(r.legs) },
+  { key: 'service', header: 'Service', align: 'right', render: (r) => formatMinutes(r.service) },
+  { key: 'drive', header: 'Drive', align: 'right', render: (r) => formatMinutes(r.drive) },
+  { key: 'idle', header: 'Idle / paperwork', align: 'right', render: (r) => formatMinutes(r.idle) },
+  { key: 'servicePct', header: 'Service % of active', align: 'right', render: (r) => (r.servicePct != null ? <Badge tone={r.servicePct >= 60 ? 'success' : 'warning'}>{formatPercent(r.servicePct)}</Badge> : '-'), csv: (r) => r.servicePct },
+];
+
 export default function ServiceVsDriveTime() {
   const opts = useApi(() => biService.driveTimeOptions(), []);
   const [range, setRange] = useState(defaultRange());
@@ -40,6 +52,12 @@ export default function ServiceVsDriveTime() {
 
   const routeCodes = (opts.data && opts.data.routeCodes) || [];
   const k = data && data.kpis;
+  const byRouteDay = (data && data.byRouteDay) || [];
+  const dayGroups = useMemo(() => {
+    const m = new Map();
+    for (const r of byRouteDay) { if (!m.has(r.routeCode)) m.set(r.routeCode, []); m.get(r.routeCode).push(r); }
+    return [...m.entries()].map(([rc, rows]) => ({ routeCode: rc, rows })).sort((a, b) => a.routeCode.localeCompare(b.routeCode));
+  }, [byRouteDay]);
   const splitData = useMemo(() => (k ? [
     { name: 'Service', value: k.serviceMinutes },
     { name: 'Drive', value: k.driveMinutes },
@@ -50,17 +68,11 @@ export default function ServiceVsDriveTime() {
     <div>
       <PageHeader
         title="Service vs Drive Time"
-        subtitle="On-site service time vs Mapbox drive time between consecutive stops, and the non-driving idle gap (paperwork/travel slack)."
+        subtitle="On-site service time vs Mapbox drive time between consecutive stops, and the non-driving idle gap (paperwork/travel slack). Per route (NRV1…) per day below."
       />
 
-      <div className="card p-3 mb-5 flex flex-wrap items-end gap-3">
+      <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={opts.data?.earliestDate} max={opts.data?.latestDate} />
-        <label className="flex flex-col"><span className="field-label">Route</span>
-          <select className="field" value={routeCode} onChange={(e) => setRouteCode(e.target.value)}>
-            <option value="all">All routes</option>
-            {routeCodes.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </label>
         <label className="flex flex-col"><span className="field-label">Granularity</span>
           <select className="field" value={granularity} onChange={(e) => setGranularity(e.target.value)}>
             {GRANULARITIES.map((g) => <option key={g} value={g}>{g}</option>)}
@@ -68,6 +80,7 @@ export default function ServiceVsDriveTime() {
         </label>
         {meta?.unsyncedLegs > 0 && <span className="text-xs text-warning-600 pb-2">{formatNumber(meta.unsyncedLegs)} legs lack a synced drive time — run the Distances Sync to fill them.</span>}
       </div>
+      <RouteTabs routes={routeCodes} value={routeCode} onChange={setRouteCode} className="mb-5" />
 
       <AsyncSection loading={loading || opts.loading} error={error} data={k ? [k] : null} reload={reload} minEmpty>
         {() => (
@@ -98,6 +111,31 @@ export default function ServiceVsDriveTime() {
               <div>
                 <h3 className="text-sm font-semibold text-dark-700 mb-2">By technician</h3>
                 <DataTable columns={mkColumns('technician', 'Technician')} rows={data.byTechnician} exportFilename="service-vs-drive-by-tech" paginated={false} initialSort={{ key: 'drive', dir: 'desc' }} />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-dark-700 mb-2">Day by day (per route)</h3>
+              <div className="space-y-4">
+                {dayGroups.map((g) => {
+                  const svc = g.rows.reduce((t, r) => t + r.service, 0);
+                  const drv = g.rows.reduce((t, r) => t + r.drive, 0);
+                  const idl = g.rows.reduce((t, r) => t + r.idle, 0);
+                  return (
+                    <Card key={g.routeCode} className="p-0 overflow-hidden">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dark-100 px-4 py-3">
+                        <div className="font-semibold text-dark-800">Route {g.routeCode}</div>
+                        <div className="flex items-center gap-4 text-xs text-dark-500">
+                          <span>{formatNumber(g.rows.length)} day(s)</span>
+                          <span>service {formatMinutes(svc)}</span>
+                          <span>drive {formatMinutes(drv)}</span>
+                          <span>idle {formatMinutes(idl)}</span>
+                        </div>
+                      </div>
+                      <DataTable columns={dayColumns} rows={g.rows} exportFilename={`service-vs-drive-${g.routeCode}`} paginated={false} initialSort={{ key: 'date', dir: 'desc' }} />
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           </div>

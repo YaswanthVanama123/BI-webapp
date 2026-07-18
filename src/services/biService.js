@@ -21,8 +21,10 @@ const biService = {
   invoiceDetail: (invoiceNumber) => get(`/invoices/${encodeURIComponent(invoiceNumber)}`),
 
   revenueByCategory: (f) => get('/revenue/by-category', f),
+  revenueCategoryDetail: (f) => get('/revenue/category-detail', f),
   revenueByRoute: (f) => get('/revenue/by-route', f),
   revenueByCustomer: (f) => get('/revenue/by-customer', f),
+  revenueCustomerDetail: (id, f) => get(`/revenue/customer/${encodeURIComponent(id)}`, f),
   revenuePerStop: (f) => get('/revenue/per-stop', f),
 
   payrollCost: (f) => get('/payroll/cost', f),

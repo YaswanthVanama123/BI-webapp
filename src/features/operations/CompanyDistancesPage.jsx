@@ -115,7 +115,7 @@ export default function CompanyDistances() {
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {(rows) => (
           <>
-            <DataTable columns={columns} rows={rows} exportFilename="company-distances" exportable={false} paginated={false} />
+            <DataTable columns={columns} rows={rows} exportFilename="company-distances" paginated={false} />
             <div className="flex items-center justify-between mt-3 text-sm text-dark-500">
               <span>{filtered === 0 ? 'No matching pairs' : `Page ${page} of ${totalPages} · ${formatNumber(filtered)} pairs`}</span>
               <div className="flex items-center gap-2">

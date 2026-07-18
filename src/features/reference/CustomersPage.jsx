@@ -64,14 +64,14 @@ function CustomerDetailModal({ customerId, onClose }) {
             <div>
               <div className="field-label mb-1">Pricing ({d.pricing?.length || 0})</div>
               {d.pricing && d.pricing.length
-                ? <DataTable columns={pricingColumns} rows={d.pricing} exportable={false} paginated={false} />
+                ? <DataTable columns={pricingColumns} rows={d.pricing} exportFilename={`pricing-${d.customerId}`} paginated={false} />
                 : <div className="text-sm text-dark-400">No pricing captured yet — run Sync to fetch it.</div>}
             </div>
 
             <div>
               <div className="field-label mb-1">Routes ({d.routes?.length || 0})</div>
               {d.routes && d.routes.length
-                ? <DataTable columns={routeColumns(d.routes)} rows={d.routes} exportable={false} paginated={false} />
+                ? <DataTable columns={routeColumns(d.routes)} rows={d.routes} exportFilename={`routes-${d.customerId}`} paginated={false} />
                 : <div className="text-sm text-dark-400">No routes for this customer.</div>}
             </div>
             <div className="text-xs text-dark-400">Source: {d.source}{d.fetchedAt ? ` · fetched ${new Date(d.fetchedAt).toLocaleString()}` : ''}</div>

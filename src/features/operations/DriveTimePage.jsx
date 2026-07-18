@@ -5,6 +5,7 @@ import { PageHeader, StatCard, Badge, Card } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
+import RouteTabs from '@/components/filters/RouteTabs';
 import { defaultRange } from '@/utils/dateRanges';
 import { BarChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber, formatDateShort, statusTone, toNumber } from '@/utils/format';
@@ -31,6 +32,7 @@ const summaryColumns = [
   { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
   { key: 'routeCode', header: 'Route' },
   { key: 'legCount', header: 'Legs', align: 'right', render: (r) => formatNumber(r.legCount) },
+  { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : '-'), csv: (r) => (r.invoiceNumbers || []).join(' ') },
   { key: 'drivingMinutes', header: 'Driving', align: 'right', render: (r) => formatMinutes(r.drivingMinutes) },
   { key: 'observedGapMinutes', header: 'Observed gap', align: 'right', render: (r) => formatMinutes(r.observedGapMinutes) },
   { key: 'extraTimeMinutes', header: 'Extra (idle)', align: 'right', render: (r) => <Badge tone={toNumber(r.extraTimeMinutes) > 60 ? 'warning' : 'neutral'}>{formatMinutes(r.extraTimeMinutes)}</Badge>, csv: (r) => r.extraTimeMinutes },
@@ -78,16 +80,11 @@ export default function DriveTime() {
         subtitle="Mapbox driving time between consecutive stops (same route, same day). Extra = observed gap (next arrival − prev departure) − driving time."
       />
 
-      <div className="card p-3 mb-5 flex flex-wrap items-end gap-3">
+      <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={opts.data?.earliestDate} max={opts.data?.latestDate} />
-        <label className="flex flex-col"><span className="field-label">Route</span>
-          <select className="field" value={routeCode} onChange={(e) => setRouteCode(e.target.value)}>
-            <option value="all">All routes</option>
-            {routeCodes.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </label>
         {hasData && <span className="text-xs text-dark-400 pb-2">data: {formatDateShort(opts.data.earliestDate)} – {formatDateShort(opts.data.latestDate)}</span>}
       </div>
+      <RouteTabs routes={routeCodes} value={routeCode} onChange={setRouteCode} className="mb-5" />
 
       {!opts.loading && !hasData && (
         <Card className="text-center text-sm text-dark-500">
@@ -131,7 +128,7 @@ export default function DriveTime() {
                           <span>{formatNumber(g.distanceMiles)} mi</span>
                         </div>
                       </div>
-                      <DataTable columns={legColumns} rows={g.legs} exportable={false} paginated={false} />
+                      <DataTable columns={legColumns} rows={g.legs} exportFilename={`drive-legs-${g.routeCode}-${g.date}`} paginated={false} />
                     </Card>
                   ))}
                 </div>
