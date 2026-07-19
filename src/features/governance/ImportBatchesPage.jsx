@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
-import { PageHeader, Badge } from '@/components/ui';
+import { PageHeader, Badge, StatCard } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import { formatDateShort, formatNumber, statusTone } from '@/utils/format';
@@ -20,11 +20,27 @@ const columns = [
 
 export default function ImportBatches() {
   const { data, loading, error, reload } = useApi(() => biService.importBatches({}), []);
+  const rows = data || [];
+  const k = useMemo(() => {
+    const sum = (key) => rows.reduce((t, r) => t + (Number(r.counts?.[key]) || 0), 0);
+    return { batches: rows.length, inserted: sum('inserted'), updated: sum('updated'), rejected: sum('rejected') };
+  }, [rows]);
+
   return (
     <div>
       <PageHeader title="Import Batches" subtitle="ETL run history and reconciliation counts per source" />
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
-        {(rows) => <DataTable columns={columns} rows={rows} exportFilename="import-batches" initialSort={{ key: 'startedAt', dir: 'desc' }} />}
+        {() => (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <StatCard label="Batches" value={formatNumber(k.batches)} tone="info" />
+              <StatCard label="Inserted" value={formatNumber(k.inserted)} tone="success" />
+              <StatCard label="Updated" value={formatNumber(k.updated)} />
+              <StatCard label="Rejected" value={formatNumber(k.rejected)} tone={k.rejected ? 'danger' : 'success'} />
+            </div>
+            <DataTable columns={columns} rows={rows} exportFilename="import-batches" initialSort={{ key: 'startedAt', dir: 'desc' }} />
+          </div>
+        )}
       </AsyncSection>
     </div>
   );
