@@ -13,13 +13,6 @@ import CustomerRevenueModal from './CustomerRevenueModal';
 
 const pctTone = (p) => (p == null ? 'neutral' : p >= 90 ? 'success' : p >= 50 ? 'warning' : 'danger');
 
-const columns = [
-  { key: 'category', header: 'Category' },
-  { key: 'expected', header: 'Expected (yr)', align: 'right', render: (r) => formatCurrency(r.expected) },
-  { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
-  { key: 'remaining', header: 'Remaining', align: 'right', render: (r) => formatCurrency(r.remaining) },
-  { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
-];
 const custColumns = [
   { key: 'customer', header: 'Customer' },
   { key: 'routeCode', header: 'Route' },
@@ -35,7 +28,7 @@ const invColumns = [
 ];
 
 function CategoryModal({ category, range, routeCode, onClose }) {
-  const { from, to } = range;
+  const { from, to } = range || {};
   const { data, loading, error, reload } = useApi(() => biService.revenueCategoryDetail({ name: category, from, to, routeCode }), [category, from, to, routeCode]);
   const [invoice, setInvoice] = useState(null);
   const [customer, setCustomer] = useState(null);
@@ -67,16 +60,23 @@ export default function RevenueByCategory() {
   const [routeCode, setRouteCode] = useState('all');
   const [selected, setSelected] = useState(null);
   const { from, to } = range;
+  const isAllTime = range.preset === 'all_time';
 
   const { data, loading, error, reload } = useApi(() => biService.revenueByCategory({ from, to, routeCode }), [from, to, routeCode]);
   const routeCodes = (opts.data && opts.data.routeCodes) || [];
   const k = data && data.kpis;
   const rows = (data && data.rows) || [];
   const pie = useMemo(() => rows.slice(0, 8).map((r) => ({ name: r.category, value: r.invoiced })), [rows]);
+  const columns = useMemo(() => [
+    { key: 'category', header: 'Category' },
+    { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
+    ...(isAllTime ? [{ key: 'remaining', header: 'Remaining', align: 'right', render: (r) => formatCurrency(r.remaining) }] : []),
+    { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
+  ], [isAllTime]);
 
   return (
     <div>
-      <PageHeader title="Revenue by Category" subtitle="Expected annual vs invoiced vs remaining per service category. Click a category for its customers and invoices." />
+      <PageHeader title="Revenue by Category" subtitle="Invoiced revenue per service category for the selected period (Remaining vs annual expected shows on All time). Click a category for its customers and invoices." />
       <div className="card p-3 mb-5 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={opts.data?.earliestDate} max={opts.data?.latestDate} />
         <label className="flex flex-col"><span className="field-label">Route</span>
@@ -91,16 +91,18 @@ export default function RevenueByCategory() {
         {() => (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <StatCard label="Expected (yr)" value={formatCurrency(k.expected)} tone="info" />
+              {isAllTime && <StatCard label="Expected (yr)" value={formatCurrency(k.expected)} tone="info" />}
               <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} tone="success" />
-              <StatCard label="Remaining" value={formatCurrency(k.remaining)} tone={k.remaining > 0 ? 'warning' : 'success'} />
+              {isAllTime && <StatCard label="Remaining" value={formatCurrency(k.remaining)} tone={k.remaining > 0 ? 'warning' : 'success'} />}
               <StatCard label="Categories" value={formatNumber(k.categories)} />
             </div>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <PieChartCard title="Invoiced share" subtitle="top 8" data={pie} nameKey="name" valueKey="value" />
               <div className="lg:col-span-2">
-                <BarChartCard title="Invoiced vs remaining by category" data={rows.slice(0, 15)} xKey="category"
-                  bars={[{ key: 'invoiced', label: 'Invoiced', color: '#10B981', stackId: 'c' }, { key: 'remaining', label: 'Remaining', color: '#F59E0B', stackId: 'c' }]} />
+                <BarChartCard title={isAllTime ? 'Invoiced vs remaining by category' : 'Invoiced by category'} data={rows.slice(0, 15)} xKey="category"
+                  bars={isAllTime
+                    ? [{ key: 'invoiced', label: 'Invoiced', color: '#10B981', stackId: 'c' }, { key: 'remaining', label: 'Remaining', color: '#F59E0B', stackId: 'c' }]
+                    : [{ key: 'invoiced', label: 'Invoiced', color: '#10B981' }]} />
               </div>
             </div>
             <DataTable columns={columns} rows={rows} exportFilename="revenue-by-category" initialSort={{ key: 'invoiced', dir: 'desc' }} onRowClick={(r) => setSelected(r.category)} />
