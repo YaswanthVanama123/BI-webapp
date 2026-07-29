@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { RefreshCw, MapPin } from 'lucide-react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
-import { PageHeader, Badge, Modal } from '@/components/ui';
+import { PageHeader, Badge, Modal, StatCard } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
-import { statusTone, formatNumber } from '@/utils/format';
+import { statusTone, formatNumber, formatCurrency } from '@/utils/format';
+import InvoiceLinesModal from '@/features/revenue/InvoiceLinesModal';
 
 const columns = [
   { key: 'customerName', header: 'Customer' },
@@ -23,6 +25,19 @@ const pricingColumns = [
   { key: 'defaultQty', header: 'Qty', align: 'right', render: (r) => r.defaultQty || '—' },
   { key: 'frequency', header: 'Frequency', render: (r) => r.frequency || '—' },
 ];
+const invoiceColumns = [
+  { key: 'invoiceNumber', header: 'Invoice #' },
+  { key: 'date', header: 'Date' },
+  { key: 'lineCount', header: 'Lines', align: 'right', render: (r) => formatNumber(r.lineCount) },
+  { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
+];
+const itemColumns = [
+  { key: 'item', header: 'Item' },
+  { key: 'category', header: 'Category' },
+  { key: 'qty', header: 'Qty', align: 'right', render: (r) => formatNumber(r.qty) },
+  { key: 'lines', header: 'Line count', align: 'right', render: (r) => formatNumber(r.lines) },
+  { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
+];
 
 const addrLine = (a) => [a?.line1, a?.line2, a?.line3].filter(Boolean).join(', ');
 const cityLine = (a) => [a?.city, a?.state, a?.zip].filter(Boolean).join(', ');
@@ -35,8 +50,24 @@ function routeColumns(routes) {
   return ordered.map((k) => ({ key: k, header: k.replace(/\.$/, ''), render: (r) => (r[k] != null && r[k] !== '' ? r[k] : '—') }));
 }
 
+function TabBtn({ active, first, onClick, children }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={clsx('px-4 py-2 text-sm', !first && 'border-l border-dark-200', active ? 'bg-primary-600 text-white' : 'bg-white text-dark-600 hover:bg-dark-50')}>
+      {children}
+    </button>
+  );
+}
+
 function CustomerDetailModal({ customerId, onClose }) {
   const { data, loading, error, reload } = useApi(() => biService.customerAccount(customerId), [customerId]);
+  const drill = useApi(() => biService.revenueDrill({ customerId }), [customerId]);
+  const [tab, setTab] = useState('invoices');
+  const [invoice, setInvoice] = useState(null);
+  const invoices = (drill.data && drill.data.invoices) || [];
+  const items = (drill.data && drill.data.items) || [];
+  const dk = drill.data && drill.data.kpis;
+
   return (
     <Modal open onClose={onClose} title={data?.customerName || 'Customer detail'} size="lg">
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
@@ -61,23 +92,47 @@ function CustomerDetailModal({ customerId, onClose }) {
               </div>
             </div>
 
-            <div>
-              <div className="field-label mb-1">Pricing ({d.pricing?.length || 0})</div>
-              {d.pricing && d.pricing.length
-                ? <DataTable columns={pricingColumns} rows={d.pricing} exportFilename={`pricing-${d.customerId}`} paginated={false} />
-                : <div className="text-sm text-dark-400">No pricing captured yet — run Sync to fetch it.</div>}
+            {dk && (
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard label="Invoiced (all time)" value={formatCurrency(dk.invoiced)} tone="success" />
+                <StatCard label="Invoices" value={formatNumber(dk.stops)} />
+                <StatCard label="Items" value={formatNumber(dk.items)} />
+              </div>
+            )}
+
+            <div className="inline-flex rounded-md border border-dark-300 overflow-hidden">
+              <TabBtn first active={tab === 'invoices'} onClick={() => setTab('invoices')}>Invoices ({invoices.length})</TabBtn>
+              <TabBtn active={tab === 'items'} onClick={() => setTab('items')}>Items ({items.length})</TabBtn>
+              <TabBtn active={tab === 'routes'} onClick={() => setTab('routes')}>Routes ({d.routes?.length || 0})</TabBtn>
+              <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>Pricing ({d.pricing?.length || 0})</TabBtn>
             </div>
 
-            <div>
-              <div className="field-label mb-1">Routes ({d.routes?.length || 0})</div>
-              {d.routes && d.routes.length
+            {tab === 'invoices' && (
+              drill.loading ? <div className="text-sm text-dark-400">Loading invoices…</div>
+                : invoices.length ? <DataTable columns={invoiceColumns} rows={invoices} exportFilename={`invoices-${d.customerId}`} onRowClick={(r) => setInvoice(r.invoiceNumber)} initialSort={{ key: 'date', dir: 'desc' }} />
+                : <div className="text-sm text-dark-400">No invoices created for this customer.</div>
+            )}
+            {tab === 'items' && (
+              drill.loading ? <div className="text-sm text-dark-400">Loading items…</div>
+                : items.length ? <DataTable columns={itemColumns} rows={items} exportFilename={`items-${d.customerId}`} initialSort={{ key: 'invoiced', dir: 'desc' }} />
+                : <div className="text-sm text-dark-400">No invoiced items for this customer.</div>
+            )}
+            {tab === 'routes' && (
+              d.routes && d.routes.length
                 ? <DataTable columns={routeColumns(d.routes)} rows={d.routes} exportFilename={`routes-${d.customerId}`} paginated={false} />
-                : <div className="text-sm text-dark-400">No routes for this customer.</div>}
-            </div>
+                : <div className="text-sm text-dark-400">No routes for this customer.</div>
+            )}
+            {tab === 'pricing' && (
+              d.pricing && d.pricing.length
+                ? <DataTable columns={pricingColumns} rows={d.pricing} exportFilename={`pricing-${d.customerId}`} paginated={false} />
+                : <div className="text-sm text-dark-400">No pricing captured yet — run Sync to fetch it.</div>
+            )}
+
             <div className="text-xs text-dark-400">Source: {d.source}{d.fetchedAt ? ` · fetched ${new Date(d.fetchedAt).toLocaleString()}` : ''}</div>
           </div>
         )}
       </AsyncSection>
+      {invoice && <InvoiceLinesModal invoiceNumber={invoice} onClose={() => setInvoice(null)} />}
     </Modal>
   );
 }
@@ -120,7 +175,7 @@ export default function Customers() {
     <div>
       <PageHeader
         title="Customers"
-        subtitle="Keyed on stable RouteStar IDs — never on display name. Click a row for service address + pricing."
+        subtitle="Keyed on stable RouteStar IDs — never on display name. Click a row for address, invoices, items, routes & pricing."
         actions={<button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Syncing…' : 'Sync account numbers'}</button>}
       />
       <div className="mb-3">

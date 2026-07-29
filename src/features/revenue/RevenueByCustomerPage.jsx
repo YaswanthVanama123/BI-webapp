@@ -30,7 +30,7 @@ export default function RevenueByCustomer() {
   const topChart = useMemo(() => rows.slice(0, 15), [rows]);
   const columns = useMemo(() => [
     { key: 'customer', header: 'Customer' },
-    { key: 'routeCode', header: 'Route' },
+    { key: 'routeCode', header: 'Route', render: (r) => (r.routes && r.routes.length ? r.routes.join(', ') : r.routeCode) },
     ...(isAllTime ? [{ key: 'expected', header: 'Expected (yr)', align: 'right', render: (r) => formatCurrency(r.expected) }] : []),
     { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
     ...(isAllTime ? [{ key: 'remaining', header: 'Remaining', align: 'right', render: (r) => <span className={r.remaining < 0 ? 'text-success-700' : 'text-dark-700'}>{formatCurrency(r.remaining)}</span> }] : []),
@@ -67,12 +67,12 @@ export default function RevenueByCustomer() {
               bars={isAllTime
                 ? [{ key: 'invoiced', label: 'Invoiced', color: '#10B981' }, { key: 'remaining', label: 'Remaining', color: '#F59E0B' }]
                 : [{ key: 'invoiced', label: 'Invoiced', color: '#10B981' }]} />
-            <DataTable columns={columns} rows={filtered} exportFilename="revenue-by-customer" initialSort={{ key: 'invoiced', dir: 'desc' }} onRowClick={(r) => setSelected(r.customerId)} />
+            <DataTable columns={columns} rows={filtered} exportFilename="revenue-by-customer" initialSort={{ key: 'invoiced', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
           </div>
         )}
       </AsyncSection>
 
-      {selected && <CustomerRevenueModal customerId={selected} range={range} onClose={() => setSelected(null)} />}
+      {selected && <CustomerRevenueModal customerId={selected.customerId} customerName={selected.customer} routes={selected.routes} range={range} onClose={() => setSelected(null)} />}
     </div>
   );
 }

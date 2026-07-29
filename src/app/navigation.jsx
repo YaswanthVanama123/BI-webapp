@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard, Gauge, MapPin, TrendingUp, Route as RouteIcon, Clock,
   DollarSign, PieChart, Layers, Users, Wallet, Coins, AlertTriangle, Tags,
-  Database, RefreshCw, FileText, ClipboardCheck, Navigation, Milestone, Network,
+  Database, RefreshCw, FileText, ClipboardCheck, Navigation, Milestone, Network, UserCheck,
 } from 'lucide-react';
 
 import DashboardPage from '@/features/dashboard/DashboardPage';
@@ -22,6 +22,7 @@ import PayrollCostPage from '@/features/cost/PayrollCostPage';
 import LaborPerStopPage from '@/features/cost/LaborPerStopPage';
 import RouteProfitabilityPage from '@/features/cost/RouteProfitabilityPage';
 import CustomersPage from '@/features/reference/CustomersPage';
+import CustomerOverviewPage from '@/features/reference/CustomerOverviewPage';
 import DataQualityPage from '@/features/governance/DataQualityPage';
 import UnmappedItemsPage from '@/features/governance/UnmappedItemsPage';
 import ImportBatchesPage from '@/features/governance/ImportBatchesPage';
@@ -65,7 +66,10 @@ export const NAV = [
   },
   {
     section: 'Reference',
-    items: [{ to: '/customers', label: 'Customers', icon: Users, hideFilters: true, element: <CustomersPage /> }],
+    items: [
+      { to: '/customer-overview', label: 'Customer Overview', icon: UserCheck, hideFilters: true, element: <CustomerOverviewPage /> },
+      { to: '/customers', label: 'Customers', icon: Users, hideFilters: true, element: <CustomersPage /> },
+    ],
   },
   {
     section: 'Governance',
