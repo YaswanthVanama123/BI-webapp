@@ -6,6 +6,7 @@ import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, StatCard } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
+import DateRangeFilter from '@/components/filters/DateRangeFilter';
 import { statusTone, formatNumber, formatCurrency } from '@/utils/format';
 import InvoiceLinesModal from '@/features/revenue/InvoiceLinesModal';
 
@@ -16,6 +17,7 @@ const columns = [
   { key: 'routeCode', header: 'Route' },
   { key: 'frequency', header: 'Frequency' },
   { key: 'customerStatus', header: 'Status', render: (r) => <Badge tone={statusTone(r.customerStatus)}>{r.customerStatus}</Badge> },
+  { key: 'createdDate', header: 'Created', render: (r) => r.createdDate || '—' },
 ];
 
 const pricingColumns = [
@@ -139,12 +141,14 @@ function CustomerDetailModal({ customerId, onClose }) {
 
 export default function Customers() {
   const [q, setQ] = useState('');
+  const [range, setRange] = useState({ preset: 'all_time', from: '', to: '' });
   const [selected, setSelected] = useState(null);
   const [job, setJob] = useState(null);
   const pollRef = useRef(null);
   const running = !!job?.running;
+  const { from, to } = range;
 
-  const { data, loading, error, reload } = useApi(() => biService.customers({}), []);
+  const { data, loading, error, reload } = useApi(() => biService.customers({ from: from || undefined, to: to || undefined }), [from, to]);
   const rows = (data || []).filter((c) => !q || `${c.customerName} ${c.routeStarAccountNumber} ${c.routeStarCustomerId}`.toLowerCase().includes(q.toLowerCase()));
 
   const fetchStatus = useCallback(async () => {
@@ -178,13 +182,14 @@ export default function Customers() {
         subtitle="Keyed on stable RouteStar IDs — never on display name. Click a row for address, invoices, items, routes & pricing."
         actions={<button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Syncing…' : 'Sync account numbers'}</button>}
       />
-      <div className="mb-3">
-        <input className="field max-w-sm" placeholder="Search name / account # / RouteStar ID…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
+        <DateRangeFilter value={range} onChange={setRange} />
+        <input className="field grow max-w-sm" placeholder="Search name / account # / RouteStar ID…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       {msg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{running && <RefreshCw size={14} className="animate-spin" />}{msg}</div>}
 
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
-        {() => <DataTable columns={columns} rows={rows} exportFilename="customers" initialSort={{ key: 'customerName', dir: 'asc' }} onRowClick={(r) => setSelected(r.routeStarCustomerId)} />}
+        {() => <DataTable columns={columns} rows={rows} exportFilename="customers" searchable={false} initialSort={{ key: 'customerName', dir: 'asc' }} onRowClick={(r) => setSelected(r.routeStarCustomerId)} />}
       </AsyncSection>
 
       {selected && <CustomerDetailModal customerId={selected} onClose={() => setSelected(null)} />}

@@ -8,23 +8,32 @@ const PAGE_SIZES = [25, 50, 100, 250];
 
 export default function DataTable({
   columns, rows, exportFilename, exportable = true, initialSort, emptyMessage, onRowClick,
-  paginated = true, pageSize = 25,
+  paginated = true, pageSize = 25, searchable = true, searchPlaceholder = 'Search…',
 }) {
   const [sort, setSort] = useState(initialSort || null);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(pageSize);
+  const [query, setQuery] = useState('');
+
+  const showSearch = searchable && (rows?.length || 0) > 5;
+  const q = query.trim().toLowerCase();
+  const filteredRows = useMemo(() => {
+    const base = rows || [];
+    if (!q) return base;
+    return base.filter((row) => Object.values(row).some((v) => v != null && typeof v !== 'object' && String(v).toLowerCase().includes(q)));
+  }, [rows, q]);
 
   const sorted = useMemo(() => {
-    if (!sort) return rows || [];
+    if (!sort) return filteredRows;
     const col = columns.find((c) => c.key === sort.key);
-    if (!col) return rows || [];
+    if (!col) return filteredRows;
     const val = (r) => (col.sortValue ? col.sortValue(r) : col.accessor ? col.accessor(r) : r[col.key]);
-    return [...(rows || [])].sort((a, b) => {
+    return [...filteredRows].sort((a, b) => {
       const av = val(a); const bv = val(b);
       const cmp = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av ?? '').localeCompare(String(bv ?? ''));
       return sort.dir === 'asc' ? cmp : -cmp;
     });
-  }, [rows, sort, columns]);
+  }, [rows, sort, columns, filteredRows]);
 
   const total = sorted.length;
   const pageCount = paginated ? Math.max(1, Math.ceil(total / size)) : 1;
@@ -40,10 +49,20 @@ export default function DataTable({
 
   return (
     <div className="card overflow-hidden">
-      {exportable && (
-        <div className="flex items-center justify-between px-4 py-2 border-b border-dark-100">
-          <span className="text-xs text-dark-400">{total} rows</span>
-          <ExportButton rows={sorted} columns={columns} filename={exportFilename || 'export'} label="Export CSV" />
+      {(exportable || showSearch) && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-dark-100">
+          <div className="flex items-center gap-3">
+            {showSearch && (
+              <input
+                className="field h-8 py-1 text-sm w-48 sm:w-56"
+                placeholder={searchPlaceholder}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            )}
+            <span className="text-xs text-dark-400 whitespace-nowrap">{total} rows</span>
+          </div>
+          {exportable && <ExportButton rows={sorted} columns={columns} filename={exportFilename || 'export'} label="Export CSV" />}
         </div>
       )}
       <div className="overflow-x-auto">

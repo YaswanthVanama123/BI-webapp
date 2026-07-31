@@ -4,6 +4,7 @@ import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, Spinner } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
+import DateRangeFilter from '@/components/filters/DateRangeFilter';
 import { formatCurrency, formatDateShort, formatNumber, statusTone } from '@/utils/format';
 
 const columns = [
@@ -85,8 +86,10 @@ function InvoiceDetailModal({ invoiceNumber, onClose }) {
 
 export default function ClosedInvoices() {
   const [q, setQ] = useState('');
+  const [range, setRange] = useState({ preset: 'all_time', from: '', to: '' });
   const [selected, setSelected] = useState(null);
-  const { data, meta, loading, error, reload } = useApi(() => biService.closedInvoices({}), []);
+  const { from, to } = range;
+  const { data, meta, loading, error, reload } = useApi(() => biService.closedInvoices({ from: from || undefined, to: to || undefined }), [from, to]);
   const term = q.trim().toLowerCase();
   const rows = (data || []).filter((r) => !term
     || `${r.invoiceNumber} ${r.customer} ${r.assignedTo || ''} ${r.status || ''}`.toLowerCase().includes(term));
@@ -98,11 +101,14 @@ export default function ClosedInvoices() {
   return (
     <div>
       <PageHeader title="Closed Invoices" subtitle={subtitle} />
-      <div className="mb-4">
-        <input className="field max-w-sm" placeholder="Search invoice # / customer / technician / status…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="card p-3 mb-4 flex flex-wrap items-end gap-3">
+        <DateRangeFilter value={range} onChange={setRange} />
+        <label className="flex flex-col grow"><span className="field-label">Search</span>
+          <input className="field" placeholder="Search invoice # / customer / technician / status…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </label>
       </div>
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
-        {() => <DataTable columns={columns} rows={rows} exportFilename="closed-invoices" initialSort={{ key: 'invoiceDate', dir: 'desc' }} onRowClick={(r) => setSelected(r.invoiceNumber)} />}
+        {() => <DataTable columns={columns} rows={rows} exportFilename="closed-invoices" searchable={false} initialSort={{ key: 'invoiceDate', dir: 'desc' }} onRowClick={(r) => setSelected(r.invoiceNumber)} />}
       </AsyncSection>
       {selected && <InvoiceDetailModal invoiceNumber={selected} onClose={() => setSelected(null)} />}
     </div>

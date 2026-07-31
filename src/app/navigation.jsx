@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard, Gauge, MapPin, TrendingUp, Route as RouteIcon, Clock,
   DollarSign, PieChart, Layers, Users, Wallet, Coins, AlertTriangle, Tags,
-  Database, RefreshCw, FileText, ClipboardCheck, Navigation, Milestone, Network, UserCheck,
+  Database, RefreshCw, FileText, ClipboardCheck, Navigation, Milestone, Network, UserCheck, ShieldCheck,
 } from 'lucide-react';
 
 import DashboardPage from '@/features/dashboard/DashboardPage';
@@ -28,6 +28,7 @@ import UnmappedItemsPage from '@/features/governance/UnmappedItemsPage';
 import ImportBatchesPage from '@/features/governance/ImportBatchesPage';
 import SyncStatusPage from '@/features/governance/SyncStatusPage';
 import ConnectionsPage from '@/features/governance/ConnectionsPage';
+import UserManagementPage from '@/features/admin/UserManagementPage';
 
 export const NAV = [
   {
@@ -79,6 +80,12 @@ export const NAV = [
       { to: '/unmapped', label: 'Unmapped Items', icon: Tags, hideFilters: true, element: <UnmappedItemsPage /> },
       { to: '/imports', label: 'Import Batches', icon: Database, hideFilters: true, element: <ImportBatchesPage /> },
       { to: '/sync', label: 'Sync Status', icon: RefreshCw, hideFilters: true, element: <SyncStatusPage /> },
+    ],
+  },
+  {
+    section: 'Administration',
+    items: [
+      { to: '/users', label: 'User Management', icon: ShieldCheck, hideFilters: true, adminOnly: true, element: <UserManagementPage /> },
     ],
   },
 ];

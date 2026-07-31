@@ -17,6 +17,11 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const status = error.response?.status;
+    const url = error.config?.url || '';
+    if (status === 401 && !url.includes('/auth/login')) {
+      localStorage.removeItem('authToken');
+      if (!window.location.pathname.startsWith('/login')) window.location.assign('/login');
+    }
     const message = error.response?.data?.error?.message || error.response?.data?.message || error.message;
     return Promise.reject({ status, message: message || 'Request failed', original: error });
   }
@@ -42,10 +47,14 @@ export async function patch(url, body = {}) {
   return api.patch(url, body);
 }
 
+export async function del(url) {
+  return api.delete(url);
+}
+
 export async function upload(url, file, field = 'file') {
   const form = new FormData();
   form.append(field, file);
   return api.post(url, form);
 }
 
-export default { get, post, patch, upload };
+export default { get, post, patch, del, upload };

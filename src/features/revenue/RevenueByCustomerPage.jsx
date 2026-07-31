@@ -67,7 +67,7 @@ export default function RevenueByCustomer() {
               bars={isAllTime
                 ? [{ key: 'invoiced', label: 'Invoiced', color: '#10B981' }, { key: 'remaining', label: 'Remaining', color: '#F59E0B' }]
                 : [{ key: 'invoiced', label: 'Invoiced', color: '#10B981' }]} />
-            <DataTable columns={columns} rows={filtered} exportFilename="revenue-by-customer" initialSort={{ key: 'invoiced', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
+            <DataTable columns={columns} rows={filtered} exportFilename="revenue-by-customer" searchable={false} initialSort={{ key: 'invoiced', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
           </div>
         )}
       </AsyncSection>

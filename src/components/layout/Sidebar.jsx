@@ -2,8 +2,13 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 import { NAV } from '@/app/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Sidebar({ open, onClose }) {
+  const { isAdmin } = useAuth();
+  const groups = NAV
+    .map((g) => ({ ...g, items: g.items.filter((it) => !it.adminOnly || isAdmin) }))
+    .filter((g) => g.items.length > 0);
   return (
     <>
       {open && <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={onClose} />}
@@ -19,7 +24,7 @@ export default function Sidebar({ open, onClose }) {
           </div>
         </div>
         <nav className="px-3 py-3 space-y-4">
-          {NAV.map((group) => (
+          {groups.map((group) => (
             <div key={group.section}>
               <div className="px-2 text-[11px] font-semibold uppercase tracking-wider text-dark-400 mb-1">{group.section}</div>
               <div className="space-y-0.5">
