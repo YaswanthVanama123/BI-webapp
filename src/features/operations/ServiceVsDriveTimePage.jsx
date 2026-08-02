@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
-import { PageHeader, StatCard, Badge, Card } from '@/components/ui';
+import { PageHeader, StatCard, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
@@ -55,11 +55,6 @@ export default function ServiceVsDriveTime() {
   const routeCodes = (opts.data && opts.data.routeCodes) || [];
   const k = data && data.kpis;
   const byRouteDay = (data && data.byRouteDay) || [];
-  const dayGroups = useMemo(() => {
-    const m = new Map();
-    for (const r of byRouteDay) { if (!m.has(r.routeCode)) m.set(r.routeCode, []); m.get(r.routeCode).push(r); }
-    return [...m.entries()].map(([rc, rows]) => ({ routeCode: rc, rows })).sort((a, b) => a.routeCode.localeCompare(b.routeCode));
-  }, [byRouteDay]);
   const splitData = useMemo(() => (k ? [
     { name: 'Service', value: k.serviceMinutes },
     { name: 'Drive', value: k.driveMinutes },
@@ -117,28 +112,8 @@ export default function ServiceVsDriveTime() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-dark-700 mb-2">Day by day (per route)</h3>
-              <div className="space-y-4">
-                {dayGroups.map((g) => {
-                  const svc = g.rows.reduce((t, r) => t + r.service, 0);
-                  const drv = g.rows.reduce((t, r) => t + r.drive, 0);
-                  const idl = g.rows.reduce((t, r) => t + r.idle, 0);
-                  return (
-                    <Card key={g.routeCode} className="p-0 overflow-hidden">
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dark-100 px-4 py-3">
-                        <div className="font-semibold text-dark-800">Route {g.routeCode}</div>
-                        <div className="flex items-center gap-4 text-xs text-dark-500">
-                          <span>{formatNumber(g.rows.length)} day(s)</span>
-                          <span>service {formatMinutes(svc)}</span>
-                          <span>drive {formatMinutes(drv)}</span>
-                          <span>idle {formatMinutes(idl)}</span>
-                        </div>
-                      </div>
-                      <DataTable columns={dayColumns} rows={g.rows} exportFilename={`service-vs-drive-${g.routeCode}`} paginated={false} initialSort={{ key: 'date', dir: 'desc' }} />
-                    </Card>
-                  );
-                })}
-              </div>
+              <h3 className="text-sm font-semibold text-dark-700 mb-2">Day by day (all routes)</h3>
+              <DataTable columns={dayColumns} rows={byRouteDay} exportFilename={`service-vs-drive-day-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} />
             </div>
           </div>
         )}

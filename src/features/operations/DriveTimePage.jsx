@@ -39,6 +39,13 @@ const summaryColumns = [
   { key: 'distanceMiles', header: 'Miles', align: 'right', render: (r) => formatNumber(r.distanceMiles) },
 ];
 
+// All legs flattened into ONE table (Date + Route added, since rows are no longer grouped).
+const allLegColumns = [
+  { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
+  { key: 'routeCode', header: 'Route' },
+  ...legColumns,
+];
+
 export default function DriveTime() {
   const opts = useApi(() => biService.driveTimeOptions(), []);
   const [range, setRange] = useState(defaultRange());
@@ -71,6 +78,13 @@ export default function DriveTime() {
       m.set(g.routeCode, a);
     }
     return [...m.values()].sort((a, b) => b.extra - a.extra);
+  }, [groups]);
+
+  // Every leg across all routes/days in ONE list; Route + Date carried onto each row.
+  const allLegs = useMemo(() => {
+    const rows = [];
+    for (const g of groups) for (const l of (g.legs || [])) rows.push({ ...l, routeCode: g.routeCode, date: g.date });
+    return rows;
   }, [groups]);
 
   return (
@@ -114,24 +128,8 @@ export default function DriveTime() {
               <DataTable columns={summaryColumns} rows={groups} exportFilename={`drive-time-${from}_${to}`} initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} />
 
               <div>
-                <h3 className="text-sm font-semibold text-dark-700 mb-2">Leg detail</h3>
-                <div className="space-y-4">
-                  {groups.map((g) => (
-                    <Card key={`${g.routeCode}|${g.date}`} className="p-0 overflow-hidden">
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dark-100 px-4 py-3">
-                        <div className="font-semibold text-dark-800">Route {g.routeCode}</div>
-                        <div className="flex items-center gap-4 text-xs text-dark-500">
-                          <span>{formatDateShort(g.date)}</span>
-                          <span>{formatNumber(g.legCount)} legs</span>
-                          <span>driving {formatMinutes(g.drivingMinutes)}</span>
-                          <span>extra {formatMinutes(g.extraTimeMinutes)}</span>
-                          <span>{formatNumber(g.distanceMiles)} mi</span>
-                        </div>
-                      </div>
-                      <DataTable columns={legColumns} rows={g.legs} exportFilename={`drive-legs-${g.routeCode}-${g.date}`} paginated={false} />
-                    </Card>
-                  ))}
-                </div>
+                <h3 className="text-sm font-semibold text-dark-700 mb-2">Leg detail (all routes)</h3>
+                <DataTable columns={allLegColumns} rows={allLegs} exportFilename={`drive-legs-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} />
               </div>
             </div>
           )}

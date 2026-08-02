@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { RefreshCw, MapPin } from 'lucide-react';
+import { RefreshCw, MapPin, Calendar } from 'lucide-react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, StatCard } from '@/components/ui';
@@ -144,8 +144,11 @@ export default function Customers() {
   const [range, setRange] = useState({ preset: 'all_time', from: '', to: '' });
   const [selected, setSelected] = useState(null);
   const [job, setJob] = useState(null);
+  const [cdJob, setCdJob] = useState(null);
   const pollRef = useRef(null);
+  const cdPollRef = useRef(null);
   const running = !!job?.running;
+  const cdRunning = !!cdJob?.running;
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(() => biService.customers({ from: from || undefined, to: to || undefined }), [from, to]);
@@ -170,23 +173,51 @@ export default function Customers() {
     catch (e) { setJob({ running: false, phase: 'error', error: e?.message }); }
   };
 
+  const fetchCdStatus = useCallback(async () => {
+    try { const res = await biService.customerCreatedDatesSyncStatus(); setCdJob(res?.data || null); return res?.data || null; }
+    catch { return null; }
+  }, []);
+  useEffect(() => { fetchCdStatus(); }, [fetchCdStatus]);
+  useEffect(() => {
+    if (!cdRunning) return undefined;
+    cdPollRef.current = setInterval(async () => {
+      const j = await fetchCdStatus();
+      if (j && !j.running) { clearInterval(cdPollRef.current); reload(); }
+    }, 4000);
+    return () => clearInterval(cdPollRef.current);
+  }, [cdRunning, fetchCdStatus, reload]);
+
+  const onFetchCreated = async () => {
+    try { const res = await biService.syncCustomerCreatedDates(); setCdJob(res?.data?.job || { running: true, phase: 'fetching' }); }
+    catch (e) { setCdJob({ running: false, phase: 'error', error: e?.message }); }
+  };
+
   const msg = job && (job.phase === 'fetching'
     ? `Syncing account numbers in the background… ${formatNumber(job.stored || 0)}/${formatNumber(job.total || 0)} done. You can leave this page.`
     : job.phase === 'done' ? `Sync complete: ${formatNumber(job.stored || 0)} customers updated (${formatNumber(job.withAccount || 0)} with an account #).`
     : job.phase === 'error' ? `Sync failed: ${job.error || 'error'}` : null);
+
+  const cdMsg = cdJob && (cdJob.phase === 'fetching'
+    ? `Fetching created dates in the background… ${formatNumber(cdJob.stored || 0)} stored / ${formatNumber(cdJob.scanned || 0)} scanned. You can leave this page.`
+    : cdJob.phase === 'done' ? `Created dates fetched: ${formatNumber(cdJob.stored || 0)} customers updated.`
+    : cdJob.phase === 'error' ? `Created-date fetch failed: ${cdJob.error || 'error'}` : null);
 
   return (
     <div>
       <PageHeader
         title="Customers"
         subtitle="Keyed on stable RouteStar IDs — never on display name. Click a row for address, invoices, items, routes & pricing."
-        actions={<button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Syncing…' : 'Sync account numbers'}</button>}
+        actions={<div className="flex gap-2">
+          <button className="btn-secondary" disabled={cdRunning} onClick={onFetchCreated}><Calendar size={16} className={cdRunning ? 'animate-spin' : ''} /> {cdRunning ? 'Fetching…' : 'Fetch created dates'}</button>
+          <button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Syncing…' : 'Sync account numbers'}</button>
+        </div>}
       />
       <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} />
         <input className="field grow max-w-sm" placeholder="Search name / account # / RouteStar ID…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       {msg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{running && <RefreshCw size={14} className="animate-spin" />}{msg}</div>}
+      {cdMsg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{cdRunning && <RefreshCw size={14} className="animate-spin" />}{cdMsg}</div>}
 
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {() => <DataTable columns={columns} rows={rows} exportFilename="customers" searchable={false} initialSort={{ key: 'customerName', dir: 'asc' }} onRowClick={(r) => setSelected(r.routeStarCustomerId)} />}

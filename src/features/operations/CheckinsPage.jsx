@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
-import { PageHeader, StatCard, Badge, Card } from '@/components/ui';
+import { PageHeader, StatCard, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
@@ -19,6 +19,14 @@ const stopColumns = [
   { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => (r.serviceMinutes != null ? formatMinutes(r.serviceMinutes) : '-'), csv: (r) => r.serviceMinutes },
   { key: 'gapToNextMinutes', header: 'Idle to next', align: 'right', render: (r) => (r.gapToNextMinutes != null ? formatMinutes(r.gapToNextMinutes) : '-'), csv: (r) => r.gapToNextMinutes },
   { key: 'elapsedStatus', header: 'Check', render: (r) => <Badge tone={statusTone(r.elapsedStatus)}>{r.elapsedStatus}</Badge> },
+];
+
+// All stops flattened into ONE table (Date + Route added, since rows are no longer grouped).
+const allStopColumns = [
+  stopColumns[0],
+  { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
+  { key: 'route', header: 'Route' },
+  ...stopColumns.slice(1),
 ];
 
 const routeSummaryColumns = [
@@ -92,6 +100,21 @@ export default function Checkins() {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [groups]);
 
+  // Every stop across all routes/days in ONE list, ordered by date ascending (chronological by
+  // check-in; stops without a check-in fall back to their day). Route + date carried onto each row.
+  const allStops = useMemo(() => {
+    const rows = [];
+    for (const g of groups) for (const s of (g.stops || [])) rows.push({ ...s, route: g.route, date: g.date });
+    const ts = (r) => {
+      const t = Date.parse(r.checkIn || '');
+      if (!Number.isNaN(t)) return t;
+      const d = Date.parse(r.date || '');
+      return Number.isNaN(d) ? 0 : d;
+    };
+    rows.sort((a, b) => ts(a) - ts(b));
+    return rows.map((r, i) => ({ ...r, __seq: i + 1 }));
+  }, [groups]);
+
   return (
     <div>
       <PageHeader title="Check-in / Check-out" subtitle="Per route (NRV1…) per day: day span = first arrival → last departure; idle = gaps between consecutive stops; service% = on-site ÷ day span." />
@@ -129,25 +152,13 @@ export default function Checkins() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-dark-700 mb-2">Stop detail (by route / day)</h3>
-              <div className="space-y-4">
-                {groups.map((g) => (
-                  <Card key={`${g.route}|${g.date}`} className="p-0 overflow-hidden">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dark-100 px-4 py-3">
-                      <div className="font-semibold text-dark-800">Route {g.route}</div>
-                      <div className="flex items-center gap-4 text-xs text-dark-500">
-                        <span>{formatDateShort(g.date)}</span>
-                        <span>{formatNumber(g.stopCount)} stops</span>
-                        <span>span {g.spanMinutes != null ? formatMinutes(g.spanMinutes) : '-'}</span>
-                        <span>service {formatMinutes(g.totalServiceMinutes)}</span>
-                        <span>idle {formatMinutes(g.totalGapMinutes || 0)}</span>
-                        <span>{g.firstCheckIn || '-'} → {g.lastCheckOut || '-'}</span>
-                      </div>
-                    </div>
-                    <DataTable columns={stopColumns} rows={g.stops.map((s, i) => ({ ...s, __seq: i + 1 }))} exportFilename={`checkins-${g.route}-${g.date}`} paginated={false} />
-                  </Card>
-                ))}
-              </div>
+              <h3 className="text-sm font-semibold text-dark-700 mb-2">Stop detail (all stops, date ascending)</h3>
+              <DataTable
+                columns={allStopColumns}
+                rows={allStops}
+                exportFilename={`checkins-stops-${from}_${to}`}
+                initialSort={{ key: 'date', dir: 'asc' }}
+              />
             </div>
           </div>
         )}
