@@ -1,10 +1,45 @@
-import React from 'react';
-import { RefreshCw, Database, CheckCircle2, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import clsx from 'clsx';
+import { RefreshCw, Database, CheckCircle2, XCircle, FileDown } from 'lucide-react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import { formatNumber } from '@/utils/format';
+import { getExportFormat, setExportFormat, onExportFormatChange } from '@/utils/appSettings';
+
+function ExportFormatSetting() {
+  const [fmt, setFmt] = useState(getExportFormat());
+  useEffect(() => onExportFormatChange(setFmt), []);
+  const choose = (f) => { setExportFormat(f); setFmt(f); };
+  const option = (val, title, desc) => (
+    <button
+      type="button"
+      onClick={() => choose(val)}
+      className={clsx('flex-1 text-left rounded-lg border px-4 py-3 transition',
+        fmt === val ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-dark-200 hover:border-dark-300')}
+    >
+      <div className="flex items-center gap-2 font-semibold text-dark-800">
+        {title}
+        {fmt === val && <Badge tone="success">Default</Badge>}
+      </div>
+      <div className="text-xs text-dark-500 mt-1">{desc}</div>
+    </button>
+  );
+  return (
+    <div className="card p-5 mb-4">
+      <div className="flex items-center gap-2 mb-1">
+        <FileDown size={18} className="text-dark-400" />
+        <div className="font-semibold text-dark-800">Default export format</div>
+      </div>
+      <div className="text-xs text-dark-400 mb-3">Applies to every “Export” button across the app. Excel files open with column filters (AutoFilter) enabled automatically.</div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        {option('excel', 'Excel (.xlsx)', 'Filters enabled automatically; numbers and dates typed correctly.')}
+        {option('csv', 'CSV (.csv)', 'Plain comma-separated values; opens anywhere.')}
+      </div>
+    </div>
+  );
+}
 
 function SourceCard({ s }) {
   const ok = s.connected;
@@ -59,6 +94,7 @@ export default function Connections() {
         actions={<button className="btn-secondary" onClick={reload}><RefreshCw size={16} /> Refresh</button>}
       />
       {meta?.generatedAt && <div className="text-xs text-dark-400 mb-4">Checked {new Date(meta.generatedAt).toLocaleString()}</div>}
+      <ExportFormatSetting />
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {(rows) => (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

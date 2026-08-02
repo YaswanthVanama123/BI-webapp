@@ -62,7 +62,7 @@ export default function DataTable({
             )}
             <span className="text-xs text-dark-400 whitespace-nowrap">{total} rows</span>
           </div>
-          {exportable && <ExportButton rows={sorted} columns={columns} filename={exportFilename || 'export'} label="Export CSV" />}
+          {exportable && <ExportButton rows={sorted} columns={columns} filename={exportFilename || 'export'} />}
         </div>
       )}
       <div className="overflow-x-auto">
