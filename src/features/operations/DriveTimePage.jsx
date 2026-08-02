@@ -29,7 +29,7 @@ const legColumns = [
 ];
 
 const summaryColumns = [
-  { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
+  { key: 'date', header: 'Completed', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
   { key: 'routeCode', header: 'Route' },
   { key: 'legCount', header: 'Legs', align: 'right', render: (r) => formatNumber(r.legCount) },
   { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : '-'), csv: (r) => (r.invoiceNumbers || []).join(' ') },
@@ -40,7 +40,7 @@ const summaryColumns = [
 ];
 
 const allLegColumns = [
-  { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
+  { key: 'date', header: 'Completed', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
   { key: 'routeCode', header: 'Route' },
   ...legColumns,
 ];

@@ -30,7 +30,7 @@ const allStopColumns = [
 ];
 
 const routeSummaryColumns = [
-  { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
+  { key: 'date', header: 'Completed', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
   { key: 'route', header: 'Route' },
   { key: 'stopCount', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stopCount) },
   { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : '-'), csv: (r) => (r.invoiceNumbers || []).join(' ') },
