@@ -9,7 +9,7 @@ import { formatCurrency, formatDateShort, formatNumber, statusTone } from '@/uti
 
 const columns = [
   { key: 'invoiceNumber', header: 'Invoice #' },
-  { key: 'invoiceDate', header: 'Date', render: (r) => formatDateShort(r.invoiceDate), sortValue: (r) => r.invoiceDate || '' },
+  { key: 'dateCompleted', header: 'Completed', render: (r) => formatDateShort(r.dateCompleted), sortValue: (r) => r.dateCompleted || '' },
   { key: 'customer', header: 'Customer' },
   { key: 'assignedTo', header: 'Technician' },
   { key: 'invoiceType', header: 'Type' },
@@ -20,7 +20,6 @@ const columns = [
   { key: 'lineItemCount', header: 'Lines', align: 'right' },
   { key: 'subtotal', header: 'Subtotal', align: 'right', render: (r) => formatCurrency(r.subtotal) },
   { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
-  { key: 'dateCompleted', header: 'Completed', render: (r) => formatDateShort(r.dateCompleted), sortValue: (r) => r.dateCompleted || '' },
 ];
 
 const lineColumns = [
@@ -108,7 +107,7 @@ export default function ClosedInvoices() {
         </label>
       </div>
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
-        {() => <DataTable columns={columns} rows={rows} exportFilename="closed-invoices" searchable={false} initialSort={{ key: 'invoiceDate', dir: 'desc' }} onRowClick={(r) => setSelected(r.invoiceNumber)} />}
+        {() => <DataTable columns={columns} rows={rows} exportFilename="closed-invoices" searchable={false} initialSort={{ key: 'dateCompleted', dir: 'desc' }} onRowClick={(r) => setSelected(r.invoiceNumber)} />}
       </AsyncSection>
       {selected && <InvoiceDetailModal invoiceNumber={selected} onClose={() => setSelected(null)} />}
     </div>

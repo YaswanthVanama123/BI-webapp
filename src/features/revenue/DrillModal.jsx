@@ -37,8 +37,6 @@ function TabBtn({ active, first, onClick, children }) {
   );
 }
 
-// Shared, date-filtered, actual-invoice drill used by every revenue screen.
-// filter accepts any of { routeCode, customerId, category } — combined server-side.
 export default function DrillModal({ title, subtitle, filter, range, onClose }) {
   const { from, to } = range || {};
   const showCustomers = !filter.customerId;

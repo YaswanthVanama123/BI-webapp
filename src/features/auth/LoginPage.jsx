@@ -30,7 +30,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-dark-50">
-      {/* Brand / hero panel */}
       <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 p-12 text-white">
         <div className="flex items-center gap-3">
           <div className="h-11 w-11 rounded-xl bg-white/15 grid place-items-center font-extrabold text-lg backdrop-blur">EM</div>
@@ -51,7 +50,6 @@ export default function LoginPage() {
         <div className="text-xs text-white/60">© EnviroMaster NRV</div>
       </div>
 
-      {/* Form panel */}
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">

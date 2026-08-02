@@ -67,7 +67,7 @@ function UserFormModal({ user, onClose, onSaved }) {
 export default function UserManagement() {
   const { user: current } = useAuth();
   const { data, loading, error, reload } = useApi(() => biService.users(), []);
-  const [editing, setEditing] = useState(null); // user object or {} for new
+  const [editing, setEditing] = useState(null);
   const rows = (data && (data.data || data)) || [];
 
   const toggleActive = async (u) => {
