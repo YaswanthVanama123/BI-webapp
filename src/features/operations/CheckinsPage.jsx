@@ -16,15 +16,14 @@ const stopColumns = [
   { key: 'customer', header: 'Customer' },
   { key: 'checkIn', header: 'Check-in', render: (r) => r.checkIn || '-' },
   { key: 'checkOut', header: 'Check-out', render: (r) => r.checkOut || '-' },
-  { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => (r.serviceMinutes != null ? formatMinutes(r.serviceMinutes) : '-'), csv: (r) => r.serviceMinutes },
-  { key: 'gapToNextMinutes', header: 'Idle to next', align: 'right', render: (r) => (r.gapToNextMinutes != null ? formatMinutes(r.gapToNextMinutes) : '-'), csv: (r) => r.gapToNextMinutes },
+  { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => (r.serviceMinutes != null ? formatMinutes(r.serviceMinutes) : '-'), csv: (r) => formatMinutes(r.serviceMinutes) },
+  { key: 'gapToNextMinutes', header: 'Idle to next', align: 'right', render: (r) => (r.gapToNextMinutes != null ? formatMinutes(r.gapToNextMinutes) : '-'), csv: (r) => formatMinutes(r.gapToNextMinutes) },
   { key: 'elapsedStatus', header: 'Check', render: (r) => <Badge tone={statusTone(r.elapsedStatus)}>{r.elapsedStatus}</Badge> },
 ];
 
-// All stops flattened into ONE table (Date + Route added, since rows are no longer grouped).
 const allStopColumns = [
   stopColumns[0],
-  { key: 'date', header: 'Date', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
+  { key: 'dateCompleted', header: 'Completed', render: (r) => formatDateShort(r.dateCompleted), sortValue: (r) => r.dateCompleted || '' },
   { key: 'route', header: 'Route' },
   ...stopColumns.slice(1),
 ];
@@ -36,9 +35,9 @@ const routeSummaryColumns = [
   { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : '-'), csv: (r) => (r.invoiceNumbers || []).join(' ') },
   { key: 'firstCheckIn', header: 'First in', render: (r) => r.firstCheckIn || '-' },
   { key: 'lastCheckOut', header: 'Last out', render: (r) => r.lastCheckOut || '-' },
-  { key: 'spanMinutes', header: 'Day span', align: 'right', render: (r) => (r.spanMinutes != null ? formatMinutes(r.spanMinutes) : '-'), csv: (r) => r.spanMinutes },
-  { key: 'totalServiceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.totalServiceMinutes) },
-  { key: 'totalGapMinutes', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.totalGapMinutes || 0) },
+  { key: 'spanMinutes', header: 'Day span', align: 'right', render: (r) => (r.spanMinutes != null ? formatMinutes(r.spanMinutes) : '-'), csv: (r) => formatMinutes(r.spanMinutes) },
+  { key: 'totalServiceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.totalServiceMinutes), csv: (r) => formatMinutes(r.totalServiceMinutes) },
+  { key: 'totalGapMinutes', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.totalGapMinutes || 0), csv: (r) => formatMinutes(r.totalGapMinutes || 0) },
   {
     key: 'servicePct', header: 'Service % of day', align: 'right',
     render: (r) => (r.servicePct != null ? <Badge tone={r.servicePct >= 60 ? 'success' : 'warning'}>{formatPercent(r.servicePct)}</Badge> : '-'),
@@ -100,8 +99,6 @@ export default function Checkins() {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [groups]);
 
-  // Every stop across all routes/days in ONE list, ordered by date ascending (chronological by
-  // check-in; stops without a check-in fall back to their day). Route + date carried onto each row.
   const allStops = useMemo(() => {
     const rows = [];
     for (const g of groups) for (const s of (g.stops || [])) rows.push({ ...s, route: g.route, date: g.date });
@@ -152,12 +149,12 @@ export default function Checkins() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-dark-700 mb-2">Stop detail (all stops, date ascending)</h3>
+              <h3 className="text-sm font-semibold text-dark-700 mb-2">Stop detail (all stops, completed date ascending)</h3>
               <DataTable
                 columns={allStopColumns}
                 rows={allStops}
                 exportFilename={`checkins-stops-${from}_${to}`}
-                initialSort={{ key: 'date', dir: 'asc' }}
+                initialSort={{ key: 'dateCompleted', dir: 'asc' }}
               />
             </div>
           </div>

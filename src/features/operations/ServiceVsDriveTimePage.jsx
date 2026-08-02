@@ -20,10 +20,10 @@ const splitBars = [
 
 const mkColumns = (keyName, keyHeader) => [
   { key: keyName, header: keyHeader },
-  { key: 'service', header: 'Service', align: 'right', render: (r) => formatMinutes(r.service) },
-  { key: 'drive', header: 'Drive', align: 'right', render: (r) => formatMinutes(r.drive) },
-  { key: 'idle', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.idle) },
-  { key: 'gap', header: 'Between stops', align: 'right', render: (r) => formatMinutes(r.gap != null ? r.gap : (r.drive || 0) + (r.idle || 0)) },
+  { key: 'service', header: 'Service', align: 'right', render: (r) => formatMinutes(r.service), csv: (r) => formatMinutes(r.service) },
+  { key: 'drive', header: 'Drive', align: 'right', render: (r) => formatMinutes(r.drive), csv: (r) => formatMinutes(r.drive) },
+  { key: 'idle', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.idle), csv: (r) => formatMinutes(r.idle) },
+  { key: 'gap', header: 'Between stops', align: 'right', render: (r) => formatMinutes(r.gap != null ? r.gap : (r.drive || 0) + (r.idle || 0)), csv: (r) => formatMinutes(r.gap != null ? r.gap : (r.drive || 0) + (r.idle || 0)) },
   { key: 'stops', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stops) },
   { key: 'legs', header: 'Legs', align: 'right', render: (r) => formatNumber(r.legs) },
 ];
@@ -33,10 +33,10 @@ const dayColumns = [
   { key: 'routeCode', header: 'Route' },
   { key: 'stops', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stops) },
   { key: 'legs', header: 'Legs', align: 'right', render: (r) => formatNumber(r.legs) },
-  { key: 'service', header: 'Service', align: 'right', render: (r) => formatMinutes(r.service) },
-  { key: 'drive', header: 'Drive', align: 'right', render: (r) => formatMinutes(r.drive) },
-  { key: 'idle', header: 'Idle / paperwork', align: 'right', render: (r) => formatMinutes(r.idle) },
-  { key: 'gap', header: 'Between stops', align: 'right', render: (r) => formatMinutes(r.gap != null ? r.gap : (r.drive || 0) + (r.idle || 0)) },
+  { key: 'service', header: 'Service', align: 'right', render: (r) => formatMinutes(r.service), csv: (r) => formatMinutes(r.service) },
+  { key: 'drive', header: 'Drive', align: 'right', render: (r) => formatMinutes(r.drive), csv: (r) => formatMinutes(r.drive) },
+  { key: 'idle', header: 'Idle / paperwork', align: 'right', render: (r) => formatMinutes(r.idle), csv: (r) => formatMinutes(r.idle) },
+  { key: 'gap', header: 'Between stops', align: 'right', render: (r) => formatMinutes(r.gap != null ? r.gap : (r.drive || 0) + (r.idle || 0)), csv: (r) => formatMinutes(r.gap != null ? r.gap : (r.drive || 0) + (r.idle || 0)) },
   { key: 'servicePct', header: 'Service % of active', align: 'right', render: (r) => (r.servicePct != null ? <Badge tone={r.servicePct >= 60 ? 'success' : 'warning'}>{formatPercent(r.servicePct)}</Badge> : '-'), csv: (r) => r.servicePct },
 ];
 

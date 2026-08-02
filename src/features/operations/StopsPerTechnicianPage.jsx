@@ -15,13 +15,13 @@ const columns = (open) => [
   { key: 'stops', header: 'Total stops', align: 'right', render: (r) => formatNumber(r.stops) },
   { key: 'activeDays', header: 'Active days', align: 'right', render: (r) => formatNumber(r.activeDays) },
   { key: 'avgStopsPerDay', header: 'Avg / day', align: 'right', render: (r) => formatNumber(r.avgStopsPerDay) },
-  { key: 'serviceMinutes', header: 'Service time', align: 'right', render: (r) => formatMinutes(r.serviceMinutes) },
-  { key: 'avgServicePerStop', header: 'Svc / stop', align: 'right', render: (r) => formatMinutes(r.avgServicePerStop) },
+  { key: 'serviceMinutes', header: 'Service time', align: 'right', render: (r) => formatMinutes(r.serviceMinutes), csv: (r) => formatMinutes(r.serviceMinutes) },
+  { key: 'avgServicePerStop', header: 'Svc / stop', align: 'right', render: (r) => formatMinutes(r.avgServicePerStop), csv: (r) => formatMinutes(r.avgServicePerStop) },
 ];
 
 const stopColumns = [
   { key: 'invoiceNumber', header: 'Invoice #' },
-  { key: 'invoiceDate', header: 'Date', render: (r) => formatDateShort(r.invoiceDate), sortValue: (r) => r.invoiceDate || '' },
+  { key: 'dateCompleted', header: 'Completed', render: (r) => formatDateShort(r.dateCompleted), sortValue: (r) => r.dateCompleted || '' },
   { key: 'customer', header: 'Customer' },
   { key: 'status', header: 'Status', render: (r) => (r.status ? <Badge tone={statusTone(r.status)}>{r.status}</Badge> : '-') },
   { key: 'arrivalTime', header: 'Arrival', render: (r) => r.arrivalTime || '-' },
@@ -39,7 +39,7 @@ function TechnicianStopsModal({ technician, range, onClose }) {
     <Modal open onClose={onClose} title={`Stops — ${technician}`} subtitle={`${rows.length} closed invoices in range — click a row for line items`}>
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {() => (
-          <DataTable columns={stopColumns} rows={rows} exportFilename={`stops-${technician}`} onRowClick={(r) => setInvoice(r.invoiceNumber)} initialSort={{ key: 'invoiceDate', dir: 'desc' }} />
+          <DataTable columns={stopColumns} rows={rows} exportFilename={`stops-${technician}`} onRowClick={(r) => setInvoice(r.invoiceNumber)} initialSort={{ key: 'dateCompleted', dir: 'desc' }} />
         )}
       </AsyncSection>
       {invoice && <InvoiceLinesModal invoiceNumber={invoice} onClose={() => setInvoice(null)} />}

@@ -15,10 +15,10 @@ const columns = [
   { key: 'stops', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stops) },
   { key: 'days', header: 'Days', align: 'right', render: (r) => formatNumber(r.days) },
   { key: 'avgStopsPerDay', header: 'Stops/day', align: 'right', render: (r) => formatNumber(r.avgStopsPerDay) },
-  { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.serviceMinutes) },
-  { key: 'spanMinutes', header: 'Working span', align: 'right', render: (r) => formatMinutes(r.spanMinutes) },
-  { key: 'idleMinutes', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.idleMinutes) },
-  { key: 'avgServicePerStop', header: 'Svc/stop', align: 'right', render: (r) => formatMinutes(r.avgServicePerStop) },
+  { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.serviceMinutes), csv: (r) => formatMinutes(r.serviceMinutes) },
+  { key: 'spanMinutes', header: 'Working span', align: 'right', render: (r) => formatMinutes(r.spanMinutes), csv: (r) => formatMinutes(r.spanMinutes) },
+  { key: 'idleMinutes', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.idleMinutes), csv: (r) => formatMinutes(r.idleMinutes) },
+  { key: 'avgServicePerStop', header: 'Svc/stop', align: 'right', render: (r) => formatMinutes(r.avgServicePerStop), csv: (r) => formatMinutes(r.avgServicePerStop) },
 ];
 
 export default function TechnicianUtilization() {

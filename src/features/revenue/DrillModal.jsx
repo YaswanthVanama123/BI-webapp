@@ -16,7 +16,7 @@ const customerColumns = [
 const invoiceColumns = [
   { key: 'invoiceNumber', header: 'Invoice #' },
   { key: 'customer', header: 'Customer' },
-  { key: 'date', header: 'Date' },
+  { key: 'date', header: 'Completed' },
   { key: 'lineCount', header: 'Lines', align: 'right', render: (r) => formatNumber(r.lineCount) },
   { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
 ];

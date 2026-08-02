@@ -17,7 +17,7 @@ const columns = [
   {
     key: 'drivingMinutes', header: 'Driving time', align: 'right',
     render: (r) => (r.drivingMinutes != null ? formatMinutes(r.drivingMinutes) : <span className="text-dark-300">null</span>),
-    csv: (r) => r.drivingMinutes,
+    csv: (r) => formatMinutes(r.drivingMinutes),
   },
   { key: 'status', header: 'Status', render: (r) => <Badge tone={statusTone(r.status)}>{r.status}</Badge> },
   { key: 'syncedAt', header: 'Synced', render: (r) => (r.syncedAt ? formatDateShort(r.syncedAt) : '—') },
