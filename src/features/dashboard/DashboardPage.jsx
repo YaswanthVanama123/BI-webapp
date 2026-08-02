@@ -65,7 +65,7 @@ export default function Dashboard() {
               <div className="lg:col-span-2">
                 <BarChartCard title="Revenue by route" data={route.data?.rows || []} xKey="routeCode" bars={[{ key: 'invoiced', label: 'Invoiced', color: '#2563EB' }]} />
               </div>
-              <PieChartCard title="Where the day goes" subtitle="service vs drive vs idle" data={splitPie} nameKey="name" valueKey="value" />
+              <PieChartCard title="Where the day goes" subtitle="service vs drive vs idle" data={splitPie} nameKey="name" valueKey="value" valueFormatter={formatMinutes} />
             </div>
 
             <BarChartCard title="Technician utilization (%)" data={utilBars} xKey="technician" bars={[{ key: 'utilizationPct', label: 'Utilization %', color: '#10B981' }]} />

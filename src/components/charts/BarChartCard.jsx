@@ -3,14 +3,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceL
 import { ChartFrame } from './ChartFrame';
 import { PALETTE, axisProps, tooltipStyle } from './palette';
 
-export function BarChartCard({ title, subtitle, data, xKey, bars, height, referenceY }) {
+export function BarChartCard({ title, subtitle, data, xKey, bars, height, referenceY, valueFormatter }) {
   return (
     <ChartFrame title={title} subtitle={subtitle} height={height}>
       <BarChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
         <XAxis dataKey={xKey} {...axisProps} />
         <YAxis {...axisProps} />
-        <Tooltip contentStyle={tooltipStyle} />
+        <Tooltip contentStyle={tooltipStyle} formatter={valueFormatter ? (value, name) => [valueFormatter(value), name] : undefined} />
         {bars.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
         {referenceY != null && (
           <ReferenceLine y={referenceY} stroke="#EF4444" strokeDasharray="4 4" label={{ value: `benchmark ${referenceY}`, fontSize: 11, fill: '#EF4444' }} />

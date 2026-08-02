@@ -92,13 +92,13 @@ export default function ServiceVsDriveTime() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <PieChartCard title="Where the day goes" subtitle="service vs drive vs idle" data={splitData} nameKey="name" valueKey="value" />
+              <PieChartCard title="Where the day goes" subtitle="service vs drive vs idle" data={splitData} nameKey="name" valueKey="value" valueFormatter={formatMinutes} />
               <div className="lg:col-span-2">
-                <BarChartCard title={`Service vs drive vs idle by ${granularity}`} data={data.series} xKey="bucket" bars={splitBars} />
+                <BarChartCard title={`Service vs drive vs idle by ${granularity}`} data={data.series} xKey="bucket" bars={splitBars} valueFormatter={formatMinutes} />
               </div>
             </div>
 
-            <BarChartCard title="By route (minutes)" data={data.byRoute} xKey="routeCode" bars={splitBars} />
+            <BarChartCard title="By route (minutes)" data={data.byRoute} xKey="routeCode" bars={splitBars} valueFormatter={formatMinutes} />
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>

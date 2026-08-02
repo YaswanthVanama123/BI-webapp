@@ -60,7 +60,7 @@ export default function TechnicianUtilization() {
               <StatCard label="Idle (in span)" value={formatMinutes(k.idleMinutes)} tone="warning" />
             </div>
             <BarChartCard title="Service vs idle within the working day (min)" data={chart} xKey="technician"
-              bars={[{ key: 'service', label: 'Service', color: '#10B981', stackId: 't' }, { key: 'idle', label: 'Idle', color: '#F59E0B', stackId: 't' }]} />
+              bars={[{ key: 'service', label: 'Service', color: '#10B981', stackId: 't' }, { key: 'idle', label: 'Idle', color: '#F59E0B', stackId: 't' }]} valueFormatter={formatMinutes} />
             <DataTable columns={columns} rows={rows} exportFilename="technician-utilization" initialSort={{ key: 'utilizationPct', dir: 'desc' }} />
           </div>
         )}

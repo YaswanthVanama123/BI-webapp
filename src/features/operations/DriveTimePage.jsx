@@ -118,9 +118,9 @@ export default function DriveTime() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <BarChartCard title="Extra (idle) time by route" subtitle="gap beyond driving, over range" data={perRoute} xKey="routeCode" bars={[{ key: 'extra', label: 'Extra (min)', color: '#F59E0B' }]} />
+                <BarChartCard title="Extra (idle) time by route" subtitle="gap beyond driving, over range" data={perRoute} xKey="routeCode" bars={[{ key: 'extra', label: 'Extra (min)', color: '#F59E0B' }]} valueFormatter={formatMinutes} />
                 <BarChartCard title="Driving vs extra by route (min)" data={perRoute} xKey="routeCode"
-                  bars={[{ key: 'driving', label: 'Driving (min)', color: '#2563EB', stackId: 't' }, { key: 'extra', label: 'Extra (min)', color: '#F59E0B', stackId: 't' }]} />
+                  bars={[{ key: 'driving', label: 'Driving (min)', color: '#2563EB', stackId: 't' }, { key: 'extra', label: 'Extra (min)', color: '#F59E0B', stackId: 't' }]} valueFormatter={formatMinutes} />
               </div>
 
               <DataTable columns={summaryColumns} rows={groups} exportFilename={`drive-time-${from}_${to}`} initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} />

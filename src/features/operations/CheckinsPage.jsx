@@ -138,9 +138,9 @@ export default function Checkins() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <BarChartCard title="Day span per route (min)" subtitle="total first-in → last-out over range" data={perRoute} xKey="route" bars={[{ key: 'span', label: 'Day span (min)', color: '#2563EB' }]} />
+              <BarChartCard title="Day span per route (min)" subtitle="total first-in → last-out over range" data={perRoute} xKey="route" bars={[{ key: 'span', label: 'Day span (min)', color: '#2563EB' }]} valueFormatter={formatMinutes} />
               <BarChartCard title="Time on-site vs idle between stops (min)" subtitle="over range" data={perRoute} xKey="route"
-                bars={[{ key: 'service', label: 'Service (min)', color: '#10B981', stackId: 't' }, { key: 'gap', label: 'Idle (min)', color: '#F59E0B', stackId: 't' }]} />
+                bars={[{ key: 'service', label: 'Service (min)', color: '#10B981', stackId: 't' }, { key: 'gap', label: 'Idle (min)', color: '#F59E0B', stackId: 't' }]} valueFormatter={formatMinutes} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
