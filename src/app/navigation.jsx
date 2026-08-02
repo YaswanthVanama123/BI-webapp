@@ -18,6 +18,7 @@ import RevenueByCategoryPage from '@/features/revenue/RevenueByCategoryPage';
 import RevenueByRoutePage from '@/features/revenue/RevenueByRoutePage';
 import RevenueByCustomerPage from '@/features/revenue/RevenueByCustomerPage';
 import RevenuePerStopPage from '@/features/revenue/RevenuePerStopPage';
+import ItemFrequencyPage from '@/features/revenue/ItemFrequencyPage';
 import PayrollCostPage from '@/features/cost/PayrollCostPage';
 import LaborPerStopPage from '@/features/cost/LaborPerStopPage';
 import RouteProfitabilityPage from '@/features/cost/RouteProfitabilityPage';
@@ -55,6 +56,7 @@ export const NAV = [
       { to: '/revenue/route', label: 'Revenue by Route', icon: RouteIcon, hideFilters: true, element: <RevenueByRoutePage /> },
       { to: '/revenue/customer', label: 'Revenue by Customer', icon: Layers, hideFilters: true, element: <RevenueByCustomerPage /> },
       { to: '/revenue/per-stop', label: 'Revenue per Stop', icon: DollarSign, hideFilters: true, element: <RevenuePerStopPage /> },
+      { to: '/items/frequency', label: 'Item Frequency', icon: Tags, hideFilters: true, element: <ItemFrequencyPage /> },
     ],
   },
   {
