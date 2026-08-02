@@ -9,6 +9,7 @@ import RouteTabs from '@/components/filters/RouteTabs';
 import { defaultRange } from '@/utils/dateRanges';
 import { BarChartCard, PieChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber, formatPercent, formatDateShort, statusTone } from '@/utils/format';
+import InvoiceLinesModal from '@/features/revenue/InvoiceLinesModal';
 
 const stopColumns = [
   { key: 'seq', header: '#', align: 'right', accessor: (r) => r.__seq },
@@ -48,6 +49,7 @@ const routeSummaryColumns = [
 
 export default function Checkins() {
   const opts = useApi(() => biService.checkinOptions(), []);
+  const [invoice, setInvoice] = useState(null);
   const [range, setRange] = useState(defaultRange());
   const [route, setRoute] = useState('all');
   const { from, to } = range;
@@ -155,11 +157,13 @@ export default function Checkins() {
                 rows={allStops}
                 exportFilename={`checkins-stops-${from}_${to}`}
                 initialSort={{ key: 'dateCompleted', dir: 'asc' }}
+                onRowClick={(r) => r.invoiceNumber && setInvoice(r.invoiceNumber)}
               />
             </div>
           </div>
         )}
       </AsyncSection>
+      {invoice && <InvoiceLinesModal invoiceNumber={invoice} onClose={() => setInvoice(null)} />}
     </div>
   );
 }
