@@ -9,6 +9,7 @@ import RouteTabs from '@/components/filters/RouteTabs';
 import { defaultRange } from '@/utils/dateRanges';
 import { BarChartCard, PieChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber, formatPercent, formatDateShort } from '@/utils/format';
+import DrillModal from '@/features/revenue/DrillModal';
 
 const GRANULARITIES = ['day', 'week', 'month'];
 
@@ -45,6 +46,7 @@ export default function ServiceVsDriveTime() {
   const [range, setRange] = useState(defaultRange());
   const [routeCode, setRouteCode] = useState('all');
   const [granularity, setGranularity] = useState('month');
+  const [drill, setDrill] = useState(null);
   const { from, to } = range;
 
   const { data, meta, loading, error, reload } = useApi(
@@ -113,11 +115,21 @@ export default function ServiceVsDriveTime() {
 
             <div>
               <h3 className="text-sm font-semibold text-dark-700 mb-2">Day by day (all routes)</h3>
-              <DataTable columns={dayColumns} rows={byRouteDay} exportFilename={`service-vs-drive-day-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} />
+              <DataTable columns={dayColumns} rows={byRouteDay} exportFilename={`service-vs-drive-day-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} onRowClick={(r) => setDrill(r)} />
             </div>
           </div>
         )}
       </AsyncSection>
+      {drill && (
+        <DrillModal
+          title={`${drill.routeCode} · ${formatDateShort(drill.date)}`}
+          subtitle="Invoices completed by this route on the selected day"
+          filter={{ routeCode: drill.routeCode }}
+          range={{ from: drill.date, to: drill.date }}
+          defaultTab="invoices"
+          onClose={() => setDrill(null)}
+        />
+      )}
     </div>
   );
 }
