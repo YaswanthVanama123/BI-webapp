@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, Spinner } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
+import RouteTabs from '@/components/filters/RouteTabs';
 import { formatCurrency, formatDateShort, formatNumber, statusTone } from '@/utils/format';
 
 const columns = [
@@ -85,16 +86,18 @@ function InvoiceDetailModal({ invoiceNumber, onClose }) {
 
 export default function ClosedInvoices() {
   const [q, setQ] = useState('');
+  const [route, setRoute] = useState('all');
   const [range, setRange] = useState({ preset: 'all_time', from: '', to: '' });
   const [selected, setSelected] = useState(null);
   const { from, to } = range;
   const { data, meta, loading, error, reload } = useApi(() => biService.closedInvoices({ from: from || undefined, to: to || undefined }), [from, to]);
   const term = q.trim().toLowerCase();
-  const rows = (data || []).filter((r) => !term
-    || `${r.invoiceNumber} ${r.customer} ${r.assignedTo || ''} ${r.status || ''}`.toLowerCase().includes(term));
+  const routeOptions = useMemo(() => [...new Set((data || []).map((r) => r.assignedTo).filter(Boolean))].sort(), [data]);
+  const rows = (data || []).filter((r) => (route === 'all' || r.assignedTo === route)
+    && (!term || `${r.invoiceNumber} ${r.customer} ${r.assignedTo || ''} ${r.status || ''}`.toLowerCase().includes(term)));
 
   const subtitle = meta
-    ? `Read directly from RouteStar (inventory_db). Showing ${formatNumber(meta.returned)} of ${formatNumber(meta.total)}${meta.truncated ? ' (most recent)' : ''}. Click a row for line items.`
+    ? `Read directly from RouteStar (inventory_db). Showing ${formatNumber(rows.length)} of ${formatNumber(meta.total)}${meta.truncated ? ' (most recent)' : ''}. Click a row for line items.`
     : 'Closed invoices with stop times, read directly from RouteStar. Click a row for line items.';
 
   return (
@@ -106,6 +109,7 @@ export default function ClosedInvoices() {
           <input className="field" placeholder="Search invoice # / customer / technician / status…" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
       </div>
+      <RouteTabs routes={routeOptions} value={route} onChange={setRoute} allLabel="All" className="mb-4" />
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {() => <DataTable columns={columns} rows={rows} exportFilename="closed-invoices" searchable={false} initialSort={{ key: 'dateCompleted', dir: 'desc' }} onRowClick={(r) => setSelected(r.invoiceNumber)} />}
       </AsyncSection>
