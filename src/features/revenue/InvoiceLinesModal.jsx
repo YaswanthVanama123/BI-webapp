@@ -53,7 +53,7 @@ export default function InvoiceLinesModal({ invoiceNumber, onClose }) {
               </div>
             )}
             <div>
-              <div className="text-sm font-semibold text-dark-800 mb-2">Line items ({d.lineItems ? d.lineItems.length : 0})</div>
+              <div className="text-sm font-semibold text-dark-800 mb-2">Items ({d.lineItems ? d.lineItems.length : 0})</div>
               <DataTable columns={lineColumns} rows={d.lineItems || []} exportFilename={`invoice-${invoiceNumber}-lines`} paginated={false} />
             </div>
           </div>

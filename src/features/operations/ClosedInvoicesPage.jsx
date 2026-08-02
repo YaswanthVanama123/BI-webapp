@@ -18,7 +18,7 @@ const columns = [
   { key: 'arrivalTime', header: 'Arrival' },
   { key: 'departureTime', header: 'Departure' },
   { key: 'elapsedTime', header: 'Elapsed' },
-  { key: 'lineItemCount', header: 'Lines', align: 'right' },
+  { key: 'lineItemCount', header: 'Items', align: 'right' },
   { key: 'subtotal', header: 'Subtotal', align: 'right', render: (r) => formatCurrency(r.subtotal) },
   { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
 ];
@@ -75,7 +75,7 @@ function InvoiceDetailModal({ invoiceNumber, onClose }) {
             </div>
           )}
           <div>
-            <div className="text-sm font-semibold text-dark-800 mb-2">Line items ({data.lineItems.length})</div>
+            <div className="text-sm font-semibold text-dark-800 mb-2">Items ({data.lineItems.length})</div>
             <DataTable columns={lineColumns} rows={data.lineItems} exportFilename={`invoice-${invoiceNumber}-lines`} paginated={false} />
           </div>
         </div>

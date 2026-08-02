@@ -26,7 +26,7 @@ const stopColumns = [
   { key: 'status', header: 'Status', render: (r) => (r.status ? <Badge tone={statusTone(r.status)}>{r.status}</Badge> : '-') },
   { key: 'arrivalTime', header: 'Arrival', render: (r) => r.arrivalTime || '-' },
   { key: 'departureTime', header: 'Departure', render: (r) => r.departureTime || '-' },
-  { key: 'lineItemCount', header: 'Lines', align: 'right', render: (r) => formatNumber(r.lineItemCount) },
+  { key: 'lineItemCount', header: 'Items', align: 'right', render: (r) => formatNumber(r.lineItemCount) },
   { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
 ];
 

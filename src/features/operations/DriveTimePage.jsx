@@ -9,6 +9,7 @@ import RouteTabs from '@/components/filters/RouteTabs';
 import { defaultRange } from '@/utils/dateRanges';
 import { BarChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber, formatDateShort, statusTone, toNumber } from '@/utils/format';
+import DrillModal from '@/features/revenue/DrillModal';
 
 const legColumns = [
   { key: 'fromInvoiceNumber', header: 'From #' },
@@ -49,6 +50,7 @@ export default function DriveTime() {
   const opts = useApi(() => biService.driveTimeOptions(), []);
   const [range, setRange] = useState(defaultRange());
   const [routeCode, setRouteCode] = useState('all');
+  const [drill, setDrill] = useState(null);
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(
@@ -123,7 +125,7 @@ export default function DriveTime() {
                   bars={[{ key: 'driving', label: 'Driving (min)', color: '#2563EB', stackId: 't' }, { key: 'extra', label: 'Extra (min)', color: '#F59E0B', stackId: 't' }]} valueFormatter={formatMinutes} />
               </div>
 
-              <DataTable columns={summaryColumns} rows={groups} exportFilename={`drive-time-${from}_${to}`} initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} />
+              <DataTable columns={summaryColumns} rows={groups} exportFilename={`drive-time-${from}_${to}`} initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} onRowClick={(r) => setDrill(r)} />
 
               <div>
                 <h3 className="text-sm font-semibold text-dark-700 mb-2">Leg detail (all routes)</h3>
@@ -132,6 +134,16 @@ export default function DriveTime() {
             </div>
           )}
         </AsyncSection>
+      )}
+      {drill && (
+        <DrillModal
+          title={`${drill.routeCode} · ${formatDateShort(drill.date)}`}
+          subtitle="Invoices completed by this route on the selected day"
+          filter={{ routeCode: drill.routeCode }}
+          range={{ from: drill.date, to: drill.date }}
+          defaultTab="invoices"
+          onClose={() => setDrill(null)}
+        />
       )}
     </div>
   );

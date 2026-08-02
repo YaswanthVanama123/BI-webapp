@@ -17,7 +17,9 @@ const invoiceColumns = [
   { key: 'invoiceNumber', header: 'Invoice #' },
   { key: 'customer', header: 'Customer' },
   { key: 'date', header: 'Completed' },
-  { key: 'lineCount', header: 'Lines', align: 'right', render: (r) => formatNumber(r.lineCount) },
+  { key: 'checkIn', header: 'Check-in', render: (r) => r.checkIn || '-' },
+  { key: 'checkOut', header: 'Check-out', render: (r) => r.checkOut || '-' },
+  { key: 'lineCount', header: 'Items', align: 'right', render: (r) => formatNumber(r.lineCount) },
   { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
 ];
 const itemColumns = [
