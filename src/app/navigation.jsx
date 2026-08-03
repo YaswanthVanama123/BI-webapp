@@ -24,6 +24,7 @@ import LaborPerStopPage from '@/features/cost/LaborPerStopPage';
 import RouteProfitabilityPage from '@/features/cost/RouteProfitabilityPage';
 import CustomersPage from '@/features/reference/CustomersPage';
 import CustomerOverviewPage from '@/features/reference/CustomerOverviewPage';
+import DataPullPage from '@/features/reference/DataPullPage';
 import DataQualityPage from '@/features/governance/DataQualityPage';
 import UnmappedItemsPage from '@/features/governance/UnmappedItemsPage';
 import ImportBatchesPage from '@/features/governance/ImportBatchesPage';
@@ -72,6 +73,7 @@ export const NAV = [
     items: [
       { to: '/customer-overview', label: 'Customer Overview', icon: UserCheck, hideFilters: true, element: <CustomerOverviewPage /> },
       { to: '/customers', label: 'Customers', icon: Users, hideFilters: true, element: <CustomersPage /> },
+      { to: '/data-export', label: 'Data Export', icon: Database, hideFilters: true, element: <DataPullPage /> },
     ],
   },
   {

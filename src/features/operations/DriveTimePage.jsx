@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, StatCard, Badge, Card } from '@/components/ui';
@@ -51,41 +51,43 @@ export default function DriveTime() {
   const [range, setRange] = useState(defaultRange());
   const [routeCode, setRouteCode] = useState('all');
   const [drill, setDrill] = useState(null);
+  const [legPage, setLegPage] = useState(1);
+  const [sumPage, setSumPage] = useState(1);
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(
-    () => (from && to ? biService.driveTime({ from, to, routeCode }) : Promise.resolve({ data: [] })),
+    () => (from && to ? biService.driveTime({ from, to, routeCode }) : Promise.resolve({ data: null })),
     [from, to, routeCode],
   );
 
+  useEffect(() => { setLegPage(1); setSumPage(1); }, [from, to, routeCode]);
+  const legsApi = useApi(
+    () => (from && to ? biService.driveTimeLegs({ from, to, routeCode, page: legPage, pageSize: 25 }) : Promise.resolve({ data: [] })),
+    [from, to, routeCode, legPage],
+  );
+  const legRows = legsApi.data || [];
+  const legTotal = (legsApi.page && legsApi.page.total) || 0;
+  const exportLegs = async () => {
+    const res = await biService.driveTimeLegs({ from, to, routeCode, pageSize: 'all' });
+    return (res && res.data) || [];
+  };
+
+  const summaryApi = useApi(
+    () => (from && to ? biService.driveTime({ from, to, routeCode, page: sumPage, pageSize: 25 }) : Promise.resolve({ data: null })),
+    [from, to, routeCode, sumPage],
+  );
+  const summaryRows = (summaryApi.data && summaryApi.data.summary) || [];
+  const summaryTotal = (summaryApi.page && summaryApi.page.total) || 0;
+  const exportSummary = async () => {
+    const res = await biService.driveTime({ from, to, routeCode, pageSize: 'all' });
+    return (res && res.data && res.data.summary) || [];
+  };
+
   const routeCodes = (opts.data && opts.data.routeCodes) || [];
-  const groups = data || [];
   const hasData = opts.data && opts.data.latestDate;
 
-  const kpi = useMemo(() => {
-    const legs = groups.reduce((t, g) => t + g.legCount, 0);
-    const driving = groups.reduce((t, g) => t + (g.drivingMinutes || 0), 0);
-    const observed = groups.reduce((t, g) => t + (g.observedGapMinutes || 0), 0);
-    const extra = groups.reduce((t, g) => t + (g.extraTimeMinutes || 0), 0);
-    const distance = groups.reduce((t, g) => t + (g.distanceMiles || 0), 0);
-    return { legs, driving, observed, extra, distance, avgExtra: legs ? extra / legs : 0 };
-  }, [groups]);
-
-  const perRoute = useMemo(() => {
-    const m = new Map();
-    for (const g of groups) {
-      const a = m.get(g.routeCode) || { routeCode: g.routeCode, driving: 0, extra: 0, distance: 0, legs: 0 };
-      a.driving += g.drivingMinutes || 0; a.extra += g.extraTimeMinutes || 0; a.distance += g.distanceMiles || 0; a.legs += g.legCount;
-      m.set(g.routeCode, a);
-    }
-    return [...m.values()].sort((a, b) => b.extra - a.extra);
-  }, [groups]);
-
-  const allLegs = useMemo(() => {
-    const rows = [];
-    for (const g of groups) for (const l of (g.legs || [])) rows.push({ ...l, routeCode: g.routeCode, date: g.date });
-    return rows;
-  }, [groups]);
+  const kpi = (data && data.kpis) || { legs: 0, driving: 0, observed: 0, extra: 0, distance: 0, avgExtra: 0 };
+  const perRoute = (data && data.perRoute) || [];
 
   return (
     <div>
@@ -125,11 +127,23 @@ export default function DriveTime() {
                   bars={[{ key: 'driving', label: 'Driving (min)', color: '#2563EB', stackId: 't' }, { key: 'extra', label: 'Extra (min)', color: '#F59E0B', stackId: 't' }]} valueFormatter={formatMinutes} />
               </div>
 
-              <DataTable columns={summaryColumns} rows={groups} exportFilename={`drive-time-${from}_${to}`} initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} onRowClick={(r) => setDrill(r)} />
+              <DataTable columns={summaryColumns} rows={summaryRows} exportFilename={`drive-time-${from}_${to}`} searchable={false} initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} onRowClick={(r) => setDrill(r)} serverSide serverTotal={summaryTotal} page={sumPage} onPageChange={setSumPage} pageSize={25} onExportAll={exportSummary} />
 
               <div>
                 <h3 className="text-sm font-semibold text-dark-700 mb-2">Leg detail (all routes)</h3>
-                <DataTable columns={allLegColumns} rows={allLegs} exportFilename={`drive-legs-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} />
+                <DataTable
+                  columns={allLegColumns}
+                  rows={legRows}
+                  exportFilename={`drive-legs-${from}_${to}`}
+                  searchable={false}
+                  initialSort={{ key: 'date', dir: 'desc' }}
+                  serverSide
+                  serverTotal={legTotal}
+                  page={legPage}
+                  onPageChange={setLegPage}
+                  pageSize={25}
+                  onExportAll={exportLegs}
+                />
               </div>
             </div>
           )}

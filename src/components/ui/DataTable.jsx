@@ -9,19 +9,20 @@ const PAGE_SIZES = [25, 50, 100, 250];
 export default function DataTable({
   columns, rows, exportFilename, exportable = true, initialSort, emptyMessage, onRowClick,
   paginated = true, pageSize = 25, searchable = true, searchPlaceholder = 'Search…',
+  serverSide = false, serverTotal = 0, page: controlledPage = 1, onPageChange, onExportAll,
 }) {
   const [sort, setSort] = useState(initialSort || null);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(pageSize);
   const [query, setQuery] = useState('');
 
-  const showSearch = searchable && (rows?.length || 0) > 5;
+  const showSearch = !serverSide && searchable && (rows?.length || 0) > 5;
   const q = query.trim().toLowerCase();
   const filteredRows = useMemo(() => {
     const base = rows || [];
-    if (!q) return base;
+    if (serverSide || !q) return base;
     return base.filter((row) => Object.values(row).some((v) => v != null && typeof v !== 'object' && String(v).toLowerCase().includes(q)));
-  }, [rows, q]);
+  }, [rows, q, serverSide]);
 
   const sorted = useMemo(() => {
     if (!sort) return filteredRows;
@@ -35,15 +36,17 @@ export default function DataTable({
     });
   }, [rows, sort, columns, filteredRows]);
 
-  const total = sorted.length;
-  const pageCount = paginated ? Math.max(1, Math.ceil(total / size)) : 1;
-  const current = Math.min(page, pageCount);
+  const effSize = serverSide ? pageSize : size;
+  const total = serverSide ? serverTotal : sorted.length;
+  const pageCount = paginated ? Math.max(1, Math.ceil(total / effSize)) : 1;
+  const current = serverSide ? controlledPage : Math.min(page, pageCount);
 
-  useEffect(() => { setPage(1); }, [total, sort?.key, sort?.dir, size]);
+  useEffect(() => { if (!serverSide) setPage(1); }, [total, sort?.key, sort?.dir, size, serverSide]);
 
-  const pageRows = paginated ? sorted.slice((current - 1) * size, current * size) : sorted;
-  const startIdx = total === 0 ? 0 : (current - 1) * size + 1;
-  const endIdx = Math.min(current * size, total);
+  const pageRows = serverSide ? sorted : (paginated ? sorted.slice((current - 1) * effSize, current * effSize) : sorted);
+  const startIdx = total === 0 ? 0 : (current - 1) * effSize + 1;
+  const endIdx = Math.min(current * effSize, total);
+  const goTo = (p) => (serverSide ? onPageChange && onPageChange(p) : setPage(p));
 
   const toggleSort = (key) => setSort((s) => (s?.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
 
@@ -62,7 +65,7 @@ export default function DataTable({
             )}
             <span className="text-xs text-dark-400 whitespace-nowrap">{total} rows</span>
           </div>
-          {exportable && <ExportButton rows={sorted} columns={columns} filename={exportFilename || 'export'} />}
+          {exportable && <ExportButton rows={sorted} fetchRows={onExportAll} columns={columns} filename={exportFilename || 'export'} />}
         </div>
       )}
       <div className="overflow-x-auto">
@@ -88,7 +91,7 @@ export default function DataTable({
           <tbody className="divide-y divide-dark-100">
             {pageRows.map((row, i) => (
               <tr
-                key={row._id || row.id || `${(current - 1) * size + i}`}
+                key={row._id || row.id || `${(current - 1) * effSize + i}`}
                 className={clsx('hover:bg-primary-50/40', onRowClick && 'cursor-pointer')}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
@@ -108,19 +111,23 @@ export default function DataTable({
       {paginated && total > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-dark-100 px-4 py-2 text-xs text-dark-500">
           <div className="flex items-center gap-2">
-            <span>Rows per page</span>
-            <select className="rounded border border-dark-300 bg-white px-1.5 py-1" value={size} onChange={(e) => setSize(Number(e.target.value))}>
-              {PAGE_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+            {!serverSide && (
+              <>
+                <span>Rows per page</span>
+                <select className="rounded border border-dark-300 bg-white px-1.5 py-1" value={size} onChange={(e) => setSize(Number(e.target.value))}>
+                  {PAGE_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <span>{startIdx}–{endIdx} of {total}</span>
             <div className="flex items-center gap-1">
-              <button className="btn-secondary px-2 py-1 disabled:opacity-40" disabled={current <= 1} onClick={() => setPage(current - 1)} aria-label="Previous page">
+              <button className="btn-secondary px-2 py-1 disabled:opacity-40" disabled={current <= 1} onClick={() => goTo(current - 1)} aria-label="Previous page">
                 <ChevronLeft size={14} />
               </button>
               <span>Page {current} / {pageCount}</span>
-              <button className="btn-secondary px-2 py-1 disabled:opacity-40" disabled={current >= pageCount} onClick={() => setPage(current + 1)} aria-label="Next page">
+              <button className="btn-secondary px-2 py-1 disabled:opacity-40" disabled={current >= pageCount} onClick={() => goTo(current + 1)} aria-label="Next page">
                 <ChevronRight size={14} />
               </button>
             </div>

@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useApi from '@/hooks/useApi';
+import useDebounce from '@/hooks/useDebounce';
 import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, Spinner } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
@@ -85,20 +86,33 @@ function InvoiceDetailModal({ invoiceNumber, onClose }) {
 }
 
 export default function ClosedInvoices() {
+  const PAGE_SIZE = 25;
   const [q, setQ] = useState('');
+  const dq = useDebounce(q, 400);
   const [route, setRoute] = useState('all');
   const [range, setRange] = useState({ preset: 'all_time', from: '', to: '' });
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const { from, to } = range;
-  const { data, meta, loading, error, reload } = useApi(() => biService.closedInvoices({ from: from || undefined, to: to || undefined }), [from, to]);
-  const term = q.trim().toLowerCase();
-  const routeOptions = useMemo(() => [...new Set((data || []).map((r) => r.assignedTo).filter(Boolean))].sort(), [data]);
-  const rows = (data || []).filter((r) => (route === 'all' || r.assignedTo === route)
-    && (!term || `${r.invoiceNumber} ${r.customer} ${r.assignedTo || ''} ${r.status || ''}`.toLowerCase().includes(term)));
 
-  const subtitle = meta
-    ? `Read directly from RouteStar (inventory_db). Showing ${formatNumber(rows.length)} of ${formatNumber(meta.total)}${meta.truncated ? ' (most recent)' : ''}. Click a row for line items.`
-    : 'Closed invoices with stop times, read directly from RouteStar. Click a row for line items.';
+  useEffect(() => { setPage(1); }, [dq, from, to, route]);
+
+  const opts = useApi(() => biService.checkinOptions(), []);
+  const routes = (opts.data && opts.data.routes) || [];
+  const params = { from: from || undefined, to: to || undefined, routeCode: route !== 'all' ? route : undefined, q: dq || undefined };
+  const { data, meta, page: pageInfo, loading, error, reload } = useApi(
+    () => biService.closedInvoices({ ...params, page, pageSize: PAGE_SIZE }),
+    [from, to, route, dq, page],
+  );
+  const rows = data || [];
+  const total = (pageInfo && pageInfo.total) || (meta && meta.total) || 0;
+
+  const subtitle = `Read directly from RouteStar (inventory_db). ${formatNumber(total)} closed invoices — loaded one page at a time. Export downloads them all. Click a row for line items.`;
+
+  const exportAll = async () => {
+    const res = await biService.closedInvoices({ ...params, pageSize: 'all' });
+    return (res && res.data) || [];
+  };
 
   return (
     <div>
@@ -109,9 +123,24 @@ export default function ClosedInvoices() {
           <input className="field" placeholder="Search invoice # / customer / technician / status…" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
       </div>
-      <RouteTabs routes={routeOptions} value={route} onChange={setRoute} allLabel="All" className="mb-4" />
+      <RouteTabs routes={routes} value={route} onChange={setRoute} allLabel="All" className="mb-4" />
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
-        {() => <DataTable columns={columns} rows={rows} exportFilename="closed-invoices" searchable={false} initialSort={{ key: 'dateCompleted', dir: 'desc' }} onRowClick={(r) => setSelected(r.invoiceNumber)} />}
+        {() => (
+          <DataTable
+            columns={columns}
+            rows={rows}
+            exportFilename="closed-invoices"
+            searchable={false}
+            initialSort={{ key: 'dateCompleted', dir: 'desc' }}
+            onRowClick={(r) => setSelected(r.invoiceNumber)}
+            serverSide
+            serverTotal={total}
+            page={page}
+            onPageChange={setPage}
+            pageSize={PAGE_SIZE}
+            onExportAll={exportAll}
+          />
+        )}
       </AsyncSection>
       {selected && <InvoiceDetailModal invoiceNumber={selected} onClose={() => setSelected(null)} />}
     </div>

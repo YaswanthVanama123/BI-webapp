@@ -4,7 +4,7 @@ import config from '@/config';
 const api = axios.create({
   baseURL: config.apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 30000,
+  timeout: 90000,
 });
 
 api.interceptors.request.use((cfg) => {

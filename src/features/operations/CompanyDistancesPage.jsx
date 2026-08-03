@@ -80,6 +80,11 @@ export default function CompanyDistances() {
   const filtered = pageMeta?.total ?? 0;
   const msg = jobMessage(job);
 
+  const exportAll = async () => {
+    const res = await biService.companyDistances({ status, from: fromId, to: toId, pageSize: 'all' });
+    return (res && res.data) || [];
+  };
+
   return (
     <div>
       <PageHeader
@@ -115,7 +120,7 @@ export default function CompanyDistances() {
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {(rows) => (
           <>
-            <DataTable columns={columns} rows={rows} exportFilename="company-distances" paginated={false} />
+            <DataTable columns={columns} rows={rows} exportFilename="company-distances" paginated={false} onExportAll={exportAll} />
             <div className="flex items-center justify-between mt-3 text-sm text-dark-500">
               <span>{filtered === 0 ? 'No matching pairs' : `Page ${page} of ${totalPages} · ${formatNumber(filtered)} pairs`}</span>
               <div className="flex items-center gap-2">

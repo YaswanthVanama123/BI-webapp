@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, StatCard, Badge } from '@/components/ui';
@@ -52,67 +52,48 @@ export default function Checkins() {
   const [invoice, setInvoice] = useState(null);
   const [range, setRange] = useState(defaultRange());
   const [route, setRoute] = useState('all');
+  const [sumPage, setSumPage] = useState(1);
+  const [stopPage, setStopPage] = useState(1);
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(
-    () => (from && to ? biService.checkins({ from, to, route }) : Promise.resolve({ data: [] })),
+    () => (from && to ? biService.checkins({ from, to, route }) : Promise.resolve({ data: null })),
     [from, to, route],
+  );
+
+  useEffect(() => { setSumPage(1); setStopPage(1); }, [from, to, route]);
+
+  const summaryApi = useApi(
+    () => (from && to ? biService.checkins({ from, to, route, page: sumPage, pageSize: 25 }) : Promise.resolve({ data: null })),
+    [from, to, route, sumPage],
+  );
+  const stopsApi = useApi(
+    () => (from && to ? biService.checkinStops({ from, to, route, page: stopPage, pageSize: 25 }) : Promise.resolve({ data: [] })),
+    [from, to, route, stopPage],
   );
 
   const routes = (opts.data && opts.data.routes) || [];
   const earliest = opts.data && opts.data.earliestDate;
   const latest = opts.data && opts.data.latestDate;
-  const groups = data || [];
   const rangeError = from && to && from > to;
 
-  const kpi = useMemo(() => {
-    const totalStops = groups.reduce((t, g) => t + g.stopCount, 0);
-    const totalService = groups.reduce((t, g) => t + (g.totalServiceMinutes || 0), 0);
-    const totalGap = groups.reduce((t, g) => t + (g.totalGapMinutes || 0), 0);
-    const totalSpan = groups.reduce((t, g) => t + (g.spanMinutes || 0), 0);
-    const flagged = groups.reduce((t, g) => t + (g.flaggedStops || 0), 0);
-    const routesSet = new Set(groups.map((g) => g.route));
-    const daysSet = new Set(groups.map((g) => g.date));
-    return {
-      routes: routesSet.size,
-      days: daysSet.size,
-      totalStops,
-      totalService,
-      avgServicePerStop: totalStops ? totalService / totalStops : 0,
-      totalGap,
-      flagged,
-      servicePct: totalSpan ? (totalService / totalSpan) * 100 : 0,
-    };
-  }, [groups]);
+  const kpi = (data && data.kpis) || { routes: 0, days: 0, totalStops: 0, totalService: 0, avgServicePerStop: 0, totalGap: 0, servicePct: 0 };
+  const perRoute = (data && data.perRoute) || [];
+  const statusData = (data && data.statusData) || [];
 
-  const perRoute = useMemo(() => {
-    const m = new Map();
-    for (const g of groups) {
-      const a = m.get(g.route) || { route: g.route, stops: 0, service: 0, gap: 0, span: 0 };
-      a.stops += g.stopCount; a.service += g.totalServiceMinutes || 0; a.gap += g.totalGapMinutes || 0; a.span += g.spanMinutes || 0;
-      m.set(g.route, a);
-    }
-    return [...m.values()].sort((a, b) => b.span - a.span);
-  }, [groups]);
+  const summaryRows = (summaryApi.data && summaryApi.data.summary) || [];
+  const summaryTotal = (summaryApi.page && summaryApi.page.total) || 0;
+  const exportSummary = async () => {
+    const res = await biService.checkins({ from, to, route, pageSize: 'all' });
+    return (res && res.data && res.data.summary) || [];
+  };
 
-  const statusData = useMemo(() => {
-    const counts = {};
-    groups.forEach((g) => g.stops.forEach((s) => { counts[s.elapsedStatus] = (counts[s.elapsedStatus] || 0) + 1; }));
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [groups]);
-
-  const allStops = useMemo(() => {
-    const rows = [];
-    for (const g of groups) for (const s of (g.stops || [])) rows.push({ ...s, route: g.route, date: g.date });
-    const ts = (r) => {
-      const t = Date.parse(r.checkIn || '');
-      if (!Number.isNaN(t)) return t;
-      const d = Date.parse(r.date || '');
-      return Number.isNaN(d) ? 0 : d;
-    };
-    rows.sort((a, b) => ts(a) - ts(b));
-    return rows.map((r, i) => ({ ...r, __seq: i + 1 }));
-  }, [groups]);
+  const stopRows = ((stopsApi.data || [])).map((s, i) => ({ ...s, __seq: (stopPage - 1) * 25 + i + 1 }));
+  const stopTotal = (stopsApi.page && stopsApi.page.total) || 0;
+  const exportStops = async () => {
+    const res = await biService.checkinStops({ from, to, route, pageSize: 'all' });
+    return ((res && res.data) || []).map((s, i) => ({ ...s, __seq: i + 1 }));
+  };
 
   return (
     <div>
@@ -146,7 +127,19 @@ export default function Checkins() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <PieChartCard title="Elapsed-time check" subtitle="source vs computed" data={statusData} nameKey="name" valueKey="value" />
               <div className="lg:col-span-2">
-                <DataTable columns={routeSummaryColumns} rows={groups} exportFilename={`checkins-summary-${from}_${to}`} initialSort={{ key: 'date', dir: 'desc' }} />
+                <DataTable
+                  columns={routeSummaryColumns}
+                  rows={summaryRows}
+                  exportFilename={`checkins-summary-${from}_${to}`}
+                  searchable={false}
+                  initialSort={{ key: 'date', dir: 'desc' }}
+                  serverSide
+                  serverTotal={summaryTotal}
+                  page={sumPage}
+                  onPageChange={setSumPage}
+                  pageSize={25}
+                  onExportAll={exportSummary}
+                />
               </div>
             </div>
 
@@ -154,10 +147,17 @@ export default function Checkins() {
               <h3 className="text-sm font-semibold text-dark-700 mb-2">Stop detail (all stops, completed date ascending)</h3>
               <DataTable
                 columns={allStopColumns}
-                rows={allStops}
+                rows={stopRows}
                 exportFilename={`checkins-stops-${from}_${to}`}
+                searchable={false}
                 initialSort={{ key: 'dateCompleted', dir: 'asc' }}
                 onRowClick={(r) => r.invoiceNumber && setInvoice(r.invoiceNumber)}
+                serverSide
+                serverTotal={stopTotal}
+                page={stopPage}
+                onPageChange={setStopPage}
+                pageSize={25}
+                onExportAll={exportStops}
               />
             </div>
           </div>
