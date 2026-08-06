@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { RefreshCw, MapPin, Calendar } from 'lucide-react';
+import { RefreshCw, MapPin, Calendar, Trash2 } from 'lucide-react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, StatCard } from '@/components/ui';
@@ -147,6 +147,8 @@ export default function Customers() {
   const [selected, setSelected] = useState(null);
   const [job, setJob] = useState(null);
   const [cdJob, setCdJob] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState(null);
   const pollRef = useRef(null);
   const cdPollRef = useRef(null);
   const running = !!job?.running;
@@ -171,8 +173,21 @@ export default function Customers() {
   }, [running, fetchStatus, reload]);
 
   const onSync = async () => {
-    try { const res = await biService.syncCustomerAccounts(); setJob(res?.data?.job || { running: true, phase: 'fetching' }); }
+    try { const res = await biService.syncCustomerAccounts(); setJob(res?.data?.job || { running: true, phase: 'discovering' }); }
     catch (e) { setJob({ running: false, phase: 'error', error: e?.message }); }
+  };
+
+  const onDeleteAll = async () => {
+    if (running || cdRunning) return;
+    if (!window.confirm('Delete ALL fetched customer data (account #, service address, pricing, routes and activity) from the BI database?\n\nThis cannot be undone. RouteStar itself is not touched — you can re-fetch with "Fetch all data".')) return;
+    setDeleting(true); setDeleteMsg(null);
+    try {
+      const res = await biService.deleteAllCustomerAccounts();
+      setDeleteMsg(`Deleted ${formatNumber(res?.data?.deleted || 0)} fetched customer records.`);
+      reload();
+    } catch (e) {
+      setDeleteMsg(`Delete failed: ${e?.response?.data?.error?.message || e?.message || 'error'}`);
+    } finally { setDeleting(false); }
   };
 
   const fetchCdStatus = useCallback(async () => {
@@ -194,10 +209,12 @@ export default function Customers() {
     catch (e) { setCdJob({ running: false, phase: 'error', error: e?.message }); }
   };
 
-  const msg = job && (job.phase === 'fetching'
-    ? `Syncing account numbers in the background… ${formatNumber(job.stored || 0)}/${formatNumber(job.total || 0)} done. You can leave this page.`
-    : job.phase === 'done' ? `Sync complete: ${formatNumber(job.stored || 0)} customers updated (${formatNumber(job.withAccount || 0)} with an account #).`
-    : job.phase === 'error' ? `Sync failed: ${job.error || 'error'}` : null);
+  const msg = job && (job.phase === 'discovering'
+    ? `Step 1 — checking all customers (create new / update existing)… ${formatNumber(job.scanned || 0)} scanned, ${formatNumber(job.discovered || 0)} new.`
+    : job.phase === 'fetching'
+    ? `Step 2 — fetching details for customers without data… ${formatNumber(job.stored || 0)}/${formatNumber(job.total || 0)} done${job.discovered ? ` (${formatNumber(job.discovered)} new customers found)` : ''}. You can leave this page.`
+    : job.phase === 'done' ? `Fetch complete: ${formatNumber(job.stored || 0)} customers fetched${job.discovered ? `, ${formatNumber(job.discovered)} newly discovered` : ''} (${formatNumber(job.withAccount || 0)} with an account #).`
+    : job.phase === 'error' ? `Fetch failed: ${job.error || 'error'}` : null);
 
   const cdMsg = cdJob && (cdJob.phase === 'fetching'
     ? `Fetching created dates in the background… ${formatNumber(cdJob.stored || 0)} stored / ${formatNumber(cdJob.scanned || 0)} scanned. You can leave this page.`
@@ -211,7 +228,8 @@ export default function Customers() {
         subtitle="Keyed on stable RouteStar IDs — never on display name. Click a row for address, invoices, items, routes & pricing."
         actions={<div className="flex gap-2">
           <button className="btn-secondary" disabled={cdRunning} onClick={onFetchCreated}><Calendar size={16} className={cdRunning ? 'animate-spin' : ''} /> {cdRunning ? 'Fetching…' : 'Fetch created dates'}</button>
-          <button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Syncing…' : 'Sync account numbers'}</button>
+          <button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Fetching…' : 'Fetch customer data'}</button>
+          <button className="btn-danger" disabled={deleting || running || cdRunning} onClick={onDeleteAll}><Trash2 size={16} /> {deleting ? 'Deleting…' : 'Delete all'}</button>
         </div>}
       />
       <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
@@ -220,6 +238,7 @@ export default function Customers() {
       </div>
       {msg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{running && <RefreshCw size={14} className="animate-spin" />}{msg}</div>}
       {cdMsg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{cdRunning && <RefreshCw size={14} className="animate-spin" />}{cdMsg}</div>}
+      {deleteMsg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{deleteMsg}</div>}
 
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {() => <DataTable columns={columns} rows={rows} exportFilename="customers" searchable={false} initialSort={{ key: 'customerName', dir: 'asc' }} onRowClick={(r) => setSelected(r.routeStarCustomerId)} />}
