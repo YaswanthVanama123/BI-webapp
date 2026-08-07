@@ -33,7 +33,6 @@ function Gate() {
   const items = NAV_ITEMS.filter((it) => !it.adminOnly || isAdmin);
   return (
     <Routes>
-      {/* Authenticated users never see the public login/landing */}
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="/welcome" element={<Navigate to="/" replace />} />
       <Route element={<AppLayout />}>
