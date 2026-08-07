@@ -151,6 +151,7 @@ export default function Customers() {
   const [deleting, setDeleting] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState(null);
   const [rowsOpen, setRowsOpen] = useState(false);
+  const [confirm, setConfirm] = useState(null);
   const pollRef = useRef(null);
   const cdPollRef = useRef(null);
   const running = !!job?.running;
@@ -179,9 +180,21 @@ export default function Customers() {
     catch (e) { setJob({ running: false, phase: 'error', error: e?.message }); }
   };
 
-  const onDeleteAll = async () => {
+  const doReFetchAll = async () => {
+    try { const res = await biService.syncCustomerAccounts({ all: true }); setJob(res?.data?.job || { running: true, phase: 'discovering' }); }
+    catch (e) { setJob({ running: false, phase: 'error', error: e?.message }); }
+  };
+  const onReFetchAll = () => {
     if (running || cdRunning) return;
-    if (!window.confirm('Delete ALL fetched customer data (account #, service address, pricing, routes and activity) from the BI database?\n\nThis cannot be undone. RouteStar itself is not touched — you can re-fetch with "Fetch all data".')) return;
+    setConfirm({
+      title: 'Re-fetch all customers?',
+      message: 'Re-fetches every customer from RouteStar (account #, pricing, routes, activity) to backfill customers whose data was captured before a fix. It runs in the background, can take a while, and never removes existing data.',
+      confirmLabel: 'Re-fetch all',
+      onConfirm: doReFetchAll,
+    });
+  };
+
+  const doDeleteAll = async () => {
     setDeleting(true); setDeleteMsg(null);
     try {
       const res = await biService.deleteAllCustomerAccounts();
@@ -190,6 +203,16 @@ export default function Customers() {
     } catch (e) {
       setDeleteMsg(`Delete failed: ${e?.response?.data?.error?.message || e?.message || 'error'}`);
     } finally { setDeleting(false); }
+  };
+  const onDeleteAll = () => {
+    if (running || cdRunning) return;
+    setConfirm({
+      title: 'Delete all fetched data?',
+      message: 'This deletes ALL fetched customer data (account #, service address, pricing, routes and activity) from the BI database. It cannot be undone. RouteStar itself is not touched — you can re-fetch afterward.',
+      confirmLabel: 'Delete all',
+      danger: true,
+      onConfirm: doDeleteAll,
+    });
   };
 
   const fetchCdStatus = useCallback(async () => {
@@ -231,6 +254,7 @@ export default function Customers() {
         actions={<div className="flex gap-2">
           <button className="btn-secondary" disabled={cdRunning} onClick={onFetchCreated}><Calendar size={16} className={cdRunning ? 'animate-spin' : ''} /> {cdRunning ? 'Fetching…' : 'Fetch created dates'}</button>
           <button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Fetching…' : 'Fetch customer data'}</button>
+          <button className="btn-secondary" disabled={running || cdRunning} onClick={onReFetchAll}><RefreshCw size={16} /> Re-fetch all</button>
           <button className="btn-secondary" onClick={() => setRowsOpen(true)}><Eye size={16} /> Fetched rows</button>
           <button className="btn-danger" disabled={deleting || running || cdRunning} onClick={onDeleteAll}><Trash2 size={16} /> {deleting ? 'Deleting…' : 'Delete all'}</button>
         </div>}
@@ -249,6 +273,22 @@ export default function Customers() {
 
       {selected && <CustomerDetailModal customerId={selected} onClose={() => setSelected(null)} />}
       {rowsOpen && <FetchRowsModal runId={job?.runId} onClose={() => setRowsOpen(false)} />}
+      {confirm && (
+        <Modal open onClose={() => setConfirm(null)} title={confirm.title}>
+          <div className="space-y-4 max-w-md">
+            <p className="text-sm text-dark-600 whitespace-pre-line">{confirm.message}</p>
+            <div className="flex justify-end gap-2">
+              <button className="btn-secondary" onClick={() => setConfirm(null)}>Cancel</button>
+              <button
+                className={confirm.danger ? 'btn-danger' : 'btn-primary'}
+                onClick={() => { const fn = confirm.onConfirm; setConfirm(null); if (fn) fn(); }}
+              >
+                {confirm.confirmLabel || 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
