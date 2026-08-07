@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { RefreshCw, MapPin, Calendar, Trash2 } from 'lucide-react';
+import { RefreshCw, MapPin, Calendar, Trash2, Eye } from 'lucide-react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, StatCard } from '@/components/ui';
@@ -9,6 +9,7 @@ import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
 import { statusTone, formatNumber, formatCurrency } from '@/utils/format';
 import InvoiceLinesModal from '@/features/revenue/InvoiceLinesModal';
+import FetchRowsModal from '@/features/reference/FetchRowsModal';
 
 const columns = [
   { key: 'customerName', header: 'Customer' },
@@ -149,6 +150,7 @@ export default function Customers() {
   const [cdJob, setCdJob] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState(null);
+  const [rowsOpen, setRowsOpen] = useState(false);
   const pollRef = useRef(null);
   const cdPollRef = useRef(null);
   const running = !!job?.running;
@@ -229,6 +231,7 @@ export default function Customers() {
         actions={<div className="flex gap-2">
           <button className="btn-secondary" disabled={cdRunning} onClick={onFetchCreated}><Calendar size={16} className={cdRunning ? 'animate-spin' : ''} /> {cdRunning ? 'Fetching…' : 'Fetch created dates'}</button>
           <button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Fetching…' : 'Fetch customer data'}</button>
+          <button className="btn-secondary" onClick={() => setRowsOpen(true)}><Eye size={16} /> Fetched rows</button>
           <button className="btn-danger" disabled={deleting || running || cdRunning} onClick={onDeleteAll}><Trash2 size={16} /> {deleting ? 'Deleting…' : 'Delete all'}</button>
         </div>}
       />
@@ -245,6 +248,7 @@ export default function Customers() {
       </AsyncSection>
 
       {selected && <CustomerDetailModal customerId={selected} onClose={() => setSelected(null)} />}
+      {rowsOpen && <FetchRowsModal runId={job?.runId} onClose={() => setRowsOpen(false)} />}
     </div>
   );
 }

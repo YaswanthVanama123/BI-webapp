@@ -6,6 +6,7 @@ import { PageHeader, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import { statusTone, formatNumber } from '@/utils/format';
+import FetchRowsModal from '@/features/reference/FetchRowsModal';
 
 const dt = (v) => (v ? new Date(v).toLocaleString() : '—');
 const dur = (ms) => {
@@ -29,6 +30,7 @@ const historyColumns = [
 export default function SyncStatus() {
   const { data, loading, error, reload } = useApi(() => biService.syncStatus({}), []);
   const [tick, setTick] = useState(0);
+  const [selectedRun, setSelectedRun] = useState(null);
   const pollRef = useRef(null);
   const running = (data && data.running) || [];
 
@@ -75,13 +77,15 @@ export default function SyncStatus() {
 
             <div>
               <h3 className="text-sm font-semibold text-dark-700 mb-2">Run history</h3>
+              <div className="text-xs text-dark-400 mb-2">Click a “Customer account fetch” row to see the customers and data stored in that run.</div>
               {history.length
-                ? <DataTable columns={historyColumns} rows={history} exportFilename="sync-history" initialSort={{ key: 'startedAt', dir: 'desc' }} />
+                ? <DataTable columns={historyColumns} rows={history} exportFilename="sync-history" initialSort={{ key: 'startedAt', dir: 'desc' }} onRowClick={(r) => { if (r.type === 'customer-accounts' && r.id) setSelectedRun(r); }} />
                 : <div className="card p-4 text-sm text-dark-400">No sync runs recorded yet — trigger a Sync (Customers or Distances) and it will appear here.</div>}
             </div>
           </div>
         )}
       </AsyncSection>
+      {selectedRun && <FetchRowsModal runId={selectedRun.id} onClose={() => setSelectedRun(null)} />}
     </div>
   );
 }
