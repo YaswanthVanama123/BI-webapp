@@ -65,7 +65,7 @@ export const NAV = [
     section: 'Cost & Profitability',
     items: [
       { to: '/payroll', label: 'Payroll Cost', icon: Wallet, element: <PayrollCostPage /> },
-      { to: '/payroll-hours', label: 'Payroll Hours', icon: Clock, element: <PayrollHoursPage /> },
+      { to: '/payroll-hours', label: 'Payroll Hours', icon: Clock, hideFilters: true, element: <PayrollHoursPage /> },
       { to: '/labor-per-stop', label: 'Labor Cost per Stop', icon: Coins, element: <LaborPerStopPage /> },
       { to: '/profitability', label: 'Route Profitability', icon: TrendingUp, element: <RouteProfitabilityPage /> },
     ],

@@ -39,19 +39,20 @@ const PAGE_SIZE = 50;
 export default function DataPull() {
   const [range, setRange] = useState({ preset: 'this_year', from: '', to: '' });
   const [page, setPage] = useState(1);
+  const [q, setQ] = useState('');
   const [selected, setSelected] = useState(null);
   const { from, to } = range;
 
-  useEffect(() => { setPage(1); }, [from, to]);
+  useEffect(() => { setPage(1); }, [from, to, q]);
   const { data, meta, page: pageInfo, loading, error, reload } = useApi(
-    () => biService.dataPull({ from: from || undefined, to: to || undefined, page, pageSize: PAGE_SIZE }),
-    [from, to, page],
+    () => biService.dataPull({ from: from || undefined, to: to || undefined, q: q || undefined, page, pageSize: PAGE_SIZE }),
+    [from, to, q, page],
   );
   const rows = data || [];
   const total = (pageInfo && pageInfo.total) || (meta && meta.total) || 0;
 
   const exportAll = async () => {
-    const res = await biService.dataPull({ from: from || undefined, to: to || undefined, pageSize: 'all' });
+    const res = await biService.dataPull({ from: from || undefined, to: to || undefined, q: q || undefined, pageSize: 'all' });
     return (res && res.data) || [];
   };
 
@@ -72,7 +73,9 @@ export default function DataPull() {
             columns={columns}
             rows={rows}
             exportFilename="bi-data-pull"
-            searchable={false}
+            searchable
+            searchPlaceholder="Search all stops…"
+            onServerSearch={setQ}
             serverSide
             serverTotal={total}
             page={page}

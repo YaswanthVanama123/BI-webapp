@@ -53,6 +53,8 @@ export default function DriveTime() {
   const [drill, setDrill] = useState(null);
   const [legPage, setLegPage] = useState(1);
   const [sumPage, setSumPage] = useState(1);
+  const [legQ, setLegQ] = useState('');
+  const [sumQ, setSumQ] = useState('');
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(
@@ -61,25 +63,27 @@ export default function DriveTime() {
   );
 
   useEffect(() => { setLegPage(1); setSumPage(1); }, [from, to, routeCode]);
+  useEffect(() => { setSumPage(1); }, [sumQ]);
+  useEffect(() => { setLegPage(1); }, [legQ]);
   const legsApi = useApi(
-    () => (from && to ? biService.driveTimeLegs({ from, to, routeCode, page: legPage, pageSize: 25 }) : Promise.resolve({ data: [] })),
-    [from, to, routeCode, legPage],
+    () => (from && to ? biService.driveTimeLegs({ from, to, routeCode, q: legQ || undefined, page: legPage, pageSize: 25 }) : Promise.resolve({ data: [] })),
+    [from, to, routeCode, legQ, legPage],
   );
   const legRows = legsApi.data || [];
   const legTotal = (legsApi.page && legsApi.page.total) || 0;
   const exportLegs = async () => {
-    const res = await biService.driveTimeLegs({ from, to, routeCode, pageSize: 'all' });
+    const res = await biService.driveTimeLegs({ from, to, routeCode, q: legQ || undefined, pageSize: 'all' });
     return (res && res.data) || [];
   };
 
   const summaryApi = useApi(
-    () => (from && to ? biService.driveTime({ from, to, routeCode, page: sumPage, pageSize: 25 }) : Promise.resolve({ data: null })),
-    [from, to, routeCode, sumPage],
+    () => (from && to ? biService.driveTime({ from, to, routeCode, q: sumQ || undefined, page: sumPage, pageSize: 25 }) : Promise.resolve({ data: null })),
+    [from, to, routeCode, sumQ, sumPage],
   );
   const summaryRows = (summaryApi.data && summaryApi.data.summary) || [];
   const summaryTotal = (summaryApi.page && summaryApi.page.total) || 0;
   const exportSummary = async () => {
-    const res = await biService.driveTime({ from, to, routeCode, pageSize: 'all' });
+    const res = await biService.driveTime({ from, to, routeCode, q: sumQ || undefined, pageSize: 'all' });
     return (res && res.data && res.data.summary) || [];
   };
 
@@ -127,7 +131,7 @@ export default function DriveTime() {
                   bars={[{ key: 'driving', label: 'Driving (min)', color: '#2563EB', stackId: 't' }, { key: 'extra', label: 'Extra (min)', color: '#F59E0B', stackId: 't' }]} valueFormatter={formatMinutes} />
               </div>
 
-              <DataTable columns={summaryColumns} rows={summaryRows} exportFilename={`drive-time-${from}_${to}`} searchable={false} initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} onRowClick={(r) => setDrill(r)} serverSide serverTotal={summaryTotal} page={sumPage} onPageChange={setSumPage} pageSize={25} onExportAll={exportSummary} />
+              <DataTable columns={summaryColumns} rows={summaryRows} exportFilename={`drive-time-${from}_${to}`} searchable onServerSearch={setSumQ} searchPlaceholder="Search route / invoice…" initialSort={{ key: 'extraTimeMinutes', dir: 'desc' }} onRowClick={(r) => setDrill(r)} serverSide serverTotal={summaryTotal} page={sumPage} onPageChange={setSumPage} pageSize={25} onExportAll={exportSummary} />
 
               <div>
                 <h3 className="text-sm font-semibold text-dark-700 mb-2">Leg detail (all routes)</h3>
@@ -135,7 +139,9 @@ export default function DriveTime() {
                   columns={allLegColumns}
                   rows={legRows}
                   exportFilename={`drive-legs-${from}_${to}`}
-                  searchable={false}
+                  searchable
+                  onServerSearch={setLegQ}
+                  searchPlaceholder="Search customer / invoice…"
                   initialSort={{ key: 'date', dir: 'desc' }}
                   serverSide
                   serverTotal={legTotal}

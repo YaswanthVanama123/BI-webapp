@@ -55,15 +55,16 @@ export default function ServiceVsDriveTime() {
   );
 
   const [dayPage, setDayPage] = useState(1);
-  useEffect(() => { setDayPage(1); }, [from, to, routeCode, granularity]);
+  const [dayQ, setDayQ] = useState('');
+  useEffect(() => { setDayPage(1); }, [from, to, routeCode, granularity, dayQ]);
   const dayApi = useApi(
-    () => (from && to ? biService.serviceVsDriveTime({ from, to, routeCode, granularity, page: dayPage, pageSize: 25 }) : Promise.resolve({ data: null })),
-    [from, to, routeCode, granularity, dayPage],
+    () => (from && to ? biService.serviceVsDriveTime({ from, to, routeCode, granularity, q: dayQ || undefined, page: dayPage, pageSize: 25 }) : Promise.resolve({ data: null })),
+    [from, to, routeCode, granularity, dayQ, dayPage],
   );
   const byRouteDay = (dayApi.data && dayApi.data.byRouteDay) || [];
   const dayTotal = (dayApi.page && dayApi.page.total) || 0;
   const exportDays = async () => {
-    const res = await biService.serviceVsDriveTime({ from, to, routeCode, granularity, pageSize: 'all' });
+    const res = await biService.serviceVsDriveTime({ from, to, routeCode, granularity, q: dayQ || undefined, pageSize: 'all' });
     return (res && res.data && res.data.byRouteDay) || [];
   };
 
@@ -127,7 +128,7 @@ export default function ServiceVsDriveTime() {
 
             <div>
               <h3 className="text-sm font-semibold text-dark-700 mb-2">Day by day (all routes)</h3>
-              <DataTable columns={dayColumns} rows={byRouteDay} exportFilename={`service-vs-drive-day-${from}_${to}`} searchable={false} initialSort={{ key: 'date', dir: 'desc' }} onRowClick={(r) => setDrill(r)} serverSide serverTotal={dayTotal} page={dayPage} onPageChange={setDayPage} pageSize={25} onExportAll={exportDays} />
+              <DataTable columns={dayColumns} rows={byRouteDay} exportFilename={`service-vs-drive-day-${from}_${to}`} searchable onServerSearch={setDayQ} searchPlaceholder="Search route / date…" initialSort={{ key: 'date', dir: 'desc' }} onRowClick={(r) => setDrill(r)} serverSide serverTotal={dayTotal} page={dayPage} onPageChange={setDayPage} pageSize={25} onExportAll={exportDays} />
             </div>
           </div>
         )}

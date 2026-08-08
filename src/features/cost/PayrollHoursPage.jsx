@@ -4,8 +4,11 @@ import biService from '@/services/biService';
 import { PageHeader, StatCard } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
+import RouteTabs from '@/components/filters/RouteTabs';
+import { BarChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber } from '@/utils/format';
 import { getPayrollAnchor, onPayrollAnchorChange } from '@/utils/appSettings';
+import DrillModal from '@/features/revenue/DrillModal';
 
 const toYMD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const parseYMD = (s) => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); };
@@ -38,21 +41,33 @@ export default function PayrollHours() {
   useEffect(() => onPayrollAnchorChange(setAnchor), []);
   const periods = useMemo(() => buildPeriods(anchor), [anchor]);
   const [idx, setIdx] = useState(0);
+  const [tech, setTech] = useState('all');
+  const [selected, setSelected] = useState(null);
   const period = periods[idx] || periods[0];
 
   useEffect(() => { setIdx(0); }, [anchor]);
+  useEffect(() => { setTech('all'); }, [period.from, period.to]);
 
   const { data, meta, loading, error, reload } = useApi(
     () => biService.payrollHours({ from: period.from, to: period.to }),
     [period.from, period.to],
   );
   const rows = data || [];
+  const techs = useMemo(() => [...new Set(rows.map((r) => r.technician).filter(Boolean))], [rows]);
+  const shown = tech === 'all' ? rows : rows.filter((r) => r.technician === tech);
+
+  const k = {
+    totalMinutes: shown.reduce((s, r) => s + (r.totalMinutes || 0), 0),
+    technicians: shown.length,
+    days: shown.reduce((s, r) => s + (r.days || 0), 0),
+    stops: shown.reduce((s, r) => s + (r.stops || 0), 0),
+  };
 
   return (
     <div>
       <PageHeader
         title="Payroll Hours"
-        subtitle="Estimated hours worked per technician for a bi-weekly payroll period — invoice service time + driving time between stops + 1 hour lunch per working day."
+        subtitle="Estimated hours worked per technician for a bi-weekly payroll period — invoice service time + driving time between stops + 1 hour lunch per working day. Click a technician for their invoices."
       />
       <div className="card p-3 mb-4 flex flex-wrap items-end gap-3">
         <div>
@@ -67,16 +82,32 @@ export default function PayrollHours() {
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {() => (
           <div className="space-y-4">
+            {techs.length > 1 && <RouteTabs routes={techs} value={tech} onChange={setTech} allLabel="All" />}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <StatCard label="Total hours" value={formatMinutes(meta?.totalMinutes || 0)} tone="success" />
-              <StatCard label="Technicians" value={formatNumber(meta?.technicians || rows.length)} />
-              <StatCard label="Days worked" value={formatNumber(meta?.days || 0)} />
-              <StatCard label="Stops" value={formatNumber(meta?.stops || 0)} />
+              <StatCard label="Total hours" value={formatMinutes(k.totalMinutes)} tone="success" />
+              <StatCard label="Technicians" value={formatNumber(k.technicians)} />
+              <StatCard label="Days worked" value={formatNumber(k.days)} />
+              <StatCard label="Stops" value={formatNumber(k.stops)} />
             </div>
-            <DataTable columns={columns} rows={rows} exportFilename={`payroll-hours-${period.from}_${period.to}`} initialSort={{ key: 'totalMinutes', dir: 'desc' }} />
+            <BarChartCard title="Hours by technician" data={shown} xKey="technician" bars={[
+              { key: 'serviceHours', label: 'Service', color: '#2563EB', stackId: 'h' },
+              { key: 'drivingHours', label: 'Driving', color: '#F59E0B', stackId: 'h' },
+              { key: 'lunchHours', label: 'Lunch', color: '#9CA3AF', stackId: 'h' },
+            ]} />
+            <DataTable columns={columns} rows={shown} exportFilename={`payroll-hours-${period.from}_${period.to}`} onRowClick={(r) => r.technician && r.technician !== '(unassigned)' && setSelected(r.technician)} initialSort={{ key: 'totalMinutes', dir: 'desc' }} />
           </div>
         )}
       </AsyncSection>
+
+      {selected && (
+        <DrillModal
+          title={`Technician ${selected}`}
+          subtitle="Invoiced work by this technician for the selected payroll period — click a customer for their invoices, then an invoice for its detail."
+          filter={{ routeCode: selected }}
+          range={{ from: period.from, to: period.to }}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }

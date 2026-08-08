@@ -54,6 +54,8 @@ export default function Checkins() {
   const [route, setRoute] = useState('all');
   const [sumPage, setSumPage] = useState(1);
   const [stopPage, setStopPage] = useState(1);
+  const [sumQ, setSumQ] = useState('');
+  const [stopQ, setStopQ] = useState('');
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(
@@ -61,15 +63,18 @@ export default function Checkins() {
     [from, to, route],
   );
 
+  useEffect(() => { setSumPage(1); }, [sumQ]);
+  useEffect(() => { setStopPage(1); }, [stopQ]);
+
   useEffect(() => { setSumPage(1); setStopPage(1); }, [from, to, route]);
 
   const summaryApi = useApi(
-    () => (from && to ? biService.checkins({ from, to, route, page: sumPage, pageSize: 25 }) : Promise.resolve({ data: null })),
-    [from, to, route, sumPage],
+    () => (from && to ? biService.checkins({ from, to, route, q: sumQ || undefined, page: sumPage, pageSize: 25 }) : Promise.resolve({ data: null })),
+    [from, to, route, sumQ, sumPage],
   );
   const stopsApi = useApi(
-    () => (from && to ? biService.checkinStops({ from, to, route, page: stopPage, pageSize: 25 }) : Promise.resolve({ data: [] })),
-    [from, to, route, stopPage],
+    () => (from && to ? biService.checkinStops({ from, to, route, q: stopQ || undefined, page: stopPage, pageSize: 25 }) : Promise.resolve({ data: [] })),
+    [from, to, route, stopQ, stopPage],
   );
 
   const routes = (opts.data && opts.data.routes) || [];
@@ -84,14 +89,14 @@ export default function Checkins() {
   const summaryRows = (summaryApi.data && summaryApi.data.summary) || [];
   const summaryTotal = (summaryApi.page && summaryApi.page.total) || 0;
   const exportSummary = async () => {
-    const res = await biService.checkins({ from, to, route, pageSize: 'all' });
+    const res = await biService.checkins({ from, to, route, q: sumQ || undefined, pageSize: 'all' });
     return (res && res.data && res.data.summary) || [];
   };
 
   const stopRows = ((stopsApi.data || [])).map((s, i) => ({ ...s, __seq: (stopPage - 1) * 25 + i + 1 }));
   const stopTotal = (stopsApi.page && stopsApi.page.total) || 0;
   const exportStops = async () => {
-    const res = await biService.checkinStops({ from, to, route, pageSize: 'all' });
+    const res = await biService.checkinStops({ from, to, route, q: stopQ || undefined, pageSize: 'all' });
     return ((res && res.data) || []).map((s, i) => ({ ...s, __seq: i + 1 }));
   };
 
@@ -131,7 +136,9 @@ export default function Checkins() {
                   columns={routeSummaryColumns}
                   rows={summaryRows}
                   exportFilename={`checkins-summary-${from}_${to}`}
-                  searchable={false}
+                  searchable
+                  onServerSearch={setSumQ}
+                  searchPlaceholder="Search route / date / invoice…"
                   initialSort={{ key: 'date', dir: 'desc' }}
                   serverSide
                   serverTotal={summaryTotal}
@@ -149,7 +156,9 @@ export default function Checkins() {
                 columns={allStopColumns}
                 rows={stopRows}
                 exportFilename={`checkins-stops-${from}_${to}`}
-                searchable={false}
+                searchable
+                onServerSearch={setStopQ}
+                searchPlaceholder="Search invoice / customer / route…"
                 initialSort={{ key: 'dateCompleted', dir: 'asc' }}
                 onRowClick={(r) => r.invoiceNumber && setInvoice(r.invoiceNumber)}
                 serverSide

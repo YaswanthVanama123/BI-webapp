@@ -9,15 +9,22 @@ const PAGE_SIZES = [25, 50, 100, 250];
 export default function DataTable({
   columns, rows, exportFilename, exportable = true, initialSort, emptyMessage, onRowClick,
   paginated = true, pageSize = 25, searchable = true, searchPlaceholder = 'Search…',
-  serverSide = false, serverTotal = 0, page: controlledPage = 1, onPageChange, onExportAll,
+  serverSide = false, serverTotal = 0, page: controlledPage = 1, onPageChange, onExportAll, onServerSearch,
 }) {
   const [sort, setSort] = useState(initialSort || null);
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(pageSize);
   const [query, setQuery] = useState('');
 
-  const showSearch = !serverSide && searchable && (rows?.length || 0) > 5;
+  const showSearch = searchable && (serverSide ? !!onServerSearch : (rows?.length || 0) > 0);
   const q = query.trim().toLowerCase();
+
+  useEffect(() => {
+    if (!onServerSearch) return undefined;
+    const t = setTimeout(() => onServerSearch(query.trim()), 350);
+    return () => clearTimeout(t);
+  }, [query, onServerSearch]);
+
   const filteredRows = useMemo(() => {
     const base = rows || [];
     if (serverSide || !q) return base;
