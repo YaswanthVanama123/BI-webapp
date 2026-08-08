@@ -12,6 +12,7 @@ const columns = [
   { key: 'serviceDate', header: 'Service date', render: (r) => formatDateShort(r.serviceDate), sortValue: (r) => r.serviceDate || '' },
   { key: 'stopId', header: 'Stop ID' },
   { key: 'customerId', header: 'Customer ID' },
+  { key: 'accountNumber', header: 'Account #', render: (r) => r.accountNumber || '—' },
   { key: 'customerName', header: 'Customer name' },
   { key: 'serviceAddress', header: 'Service address', render: (r) => r.serviceAddress || '—' },
   { key: 'routeId', header: 'Route ID' },
