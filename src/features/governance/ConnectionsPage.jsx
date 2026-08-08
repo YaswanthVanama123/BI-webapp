@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { RefreshCw, Database, CheckCircle2, XCircle, FileDown } from 'lucide-react';
+import { RefreshCw, Database, CheckCircle2, XCircle, FileDown, CalendarClock } from 'lucide-react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import { formatNumber } from '@/utils/format';
-import { getExportFormat, setExportFormat, onExportFormatChange } from '@/utils/appSettings';
+import { getExportFormat, setExportFormat, onExportFormatChange, getPayrollAnchor, setPayrollAnchor, onPayrollAnchorChange } from '@/utils/appSettings';
 
 function ExportFormatSetting() {
   const [fmt, setFmt] = useState(getExportFormat());
@@ -36,6 +36,25 @@ function ExportFormatSetting() {
       <div className="flex flex-col sm:flex-row gap-3">
         {option('excel', 'Excel (.xlsx)', 'Filters enabled automatically; numbers and dates typed correctly.')}
         {option('csv', 'CSV (.csv)', 'Plain comma-separated values; opens anywhere.')}
+      </div>
+    </div>
+  );
+}
+
+function PayrollAnchorSetting() {
+  const [anchor, setAnchor] = useState(getPayrollAnchor());
+  useEffect(() => onPayrollAnchorChange(setAnchor), []);
+  const onChange = (v) => { setPayrollAnchor(v); setAnchor(v); };
+  return (
+    <div className="card p-5 mb-4">
+      <div className="flex items-center gap-2 mb-1">
+        <CalendarClock size={18} className="text-dark-400" />
+        <div className="font-semibold text-dark-800">Payroll anchor date</div>
+      </div>
+      <div className="text-xs text-dark-400 mb-3">The most recent payroll date. The Payroll Hours screen builds bi-weekly (14-day) periods backward from this date.</div>
+      <div className="flex items-center gap-3">
+        <input type="date" className="field max-w-xs" value={anchor} onChange={(e) => onChange(e.target.value)} />
+        {anchor && <button type="button" className="btn-secondary" onClick={() => onChange('')}>Clear</button>}
       </div>
     </div>
   );
@@ -95,6 +114,7 @@ export default function Connections() {
       />
       {meta?.generatedAt && <div className="text-xs text-dark-400 mb-4">Checked {new Date(meta.generatedAt).toLocaleString()}</div>}
       <ExportFormatSetting />
+      <PayrollAnchorSetting />
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
         {(rows) => (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

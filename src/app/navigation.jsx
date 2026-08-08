@@ -22,6 +22,7 @@ import ItemFrequencyPage from '@/features/revenue/ItemFrequencyPage';
 import PayrollCostPage from '@/features/cost/PayrollCostPage';
 import LaborPerStopPage from '@/features/cost/LaborPerStopPage';
 import RouteProfitabilityPage from '@/features/cost/RouteProfitabilityPage';
+import PayrollHoursPage from '@/features/cost/PayrollHoursPage';
 import CustomersPage from '@/features/reference/CustomersPage';
 import CustomerOverviewPage from '@/features/reference/CustomerOverviewPage';
 import DataPullPage from '@/features/reference/DataPullPage';
@@ -64,6 +65,7 @@ export const NAV = [
     section: 'Cost & Profitability',
     items: [
       { to: '/payroll', label: 'Payroll Cost', icon: Wallet, element: <PayrollCostPage /> },
+      { to: '/payroll-hours', label: 'Payroll Hours', icon: Clock, element: <PayrollHoursPage /> },
       { to: '/labor-per-stop', label: 'Labor Cost per Stop', icon: Coins, element: <LaborPerStopPage /> },
       { to: '/profitability', label: 'Route Profitability', icon: TrendingUp, element: <RouteProfitabilityPage /> },
     ],
