@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import useApi from '@/hooks/useApi';
-import useDebounce from '@/hooks/useDebounce';
 import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, Spinner } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
@@ -88,21 +87,20 @@ function InvoiceDetailModal({ invoiceNumber, onClose }) {
 export default function ClosedInvoices() {
   const PAGE_SIZE = 25;
   const [q, setQ] = useState('');
-  const dq = useDebounce(q, 400);
   const [route, setRoute] = useState('all');
   const [range, setRange] = useState({ preset: 'all_time', from: '', to: '' });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const { from, to } = range;
 
-  useEffect(() => { setPage(1); }, [dq, from, to, route]);
+  useEffect(() => { setPage(1); }, [q, from, to, route]);
 
   const opts = useApi(() => biService.checkinOptions(), []);
   const routes = (opts.data && opts.data.routes) || [];
-  const params = { from: from || undefined, to: to || undefined, routeCode: route !== 'all' ? route : undefined, q: dq || undefined };
+  const params = { from: from || undefined, to: to || undefined, routeCode: route !== 'all' ? route : undefined, q: q || undefined };
   const { data, meta, page: pageInfo, loading, error, reload } = useApi(
     () => biService.closedInvoices({ ...params, page, pageSize: PAGE_SIZE }),
-    [from, to, route, dq, page],
+    [from, to, route, q, page],
   );
   const rows = data || [];
   const total = (pageInfo && pageInfo.total) || (meta && meta.total) || 0;
@@ -119,9 +117,6 @@ export default function ClosedInvoices() {
       <PageHeader title="Closed Invoices" subtitle={subtitle} />
       <div className="card p-3 mb-4 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} />
-        <label className="flex flex-col grow"><span className="field-label">Search</span>
-          <input className="field" placeholder="Search invoice # / customer / technician / status…" value={q} onChange={(e) => setQ(e.target.value)} />
-        </label>
       </div>
       <RouteTabs routes={routes} value={route} onChange={setRoute} allLabel="All" className="mb-4" />
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
@@ -130,7 +125,9 @@ export default function ClosedInvoices() {
             columns={columns}
             rows={rows}
             exportFilename="closed-invoices"
-            searchable={false}
+            searchable
+            onServerSearch={setQ}
+            searchPlaceholder="Search invoice # / customer / technician / status…"
             initialSort={{ key: 'dateCompleted', dir: 'desc' }}
             onRowClick={(r) => setSelected(r.invoiceNumber)}
             serverSide

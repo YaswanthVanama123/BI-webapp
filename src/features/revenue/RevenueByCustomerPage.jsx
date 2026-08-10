@@ -16,7 +16,6 @@ export default function RevenueByCustomer() {
   const opts = useApi(() => biService.driveTimeOptions(), []);
   const [range, setRange] = useState(defaultRange());
   const [routeCode, setRouteCode] = useState('all');
-  const [q, setQ] = useState('');
   const [selected, setSelected] = useState(null);
   const { from, to } = range;
   const isAllTime = range.preset === 'all_time';
@@ -25,8 +24,6 @@ export default function RevenueByCustomer() {
   const routeCodes = (opts.data && opts.data.routeCodes) || [];
   const k = data && data.kpis;
   const rows = (data && data.rows) || [];
-  const term = q.trim().toLowerCase();
-  const filtered = useMemo(() => (term ? rows.filter((r) => `${r.customer} ${r.routeCode}`.toLowerCase().includes(term)) : rows), [rows, term]);
   const topChart = useMemo(() => rows.slice(0, 15), [rows]);
   const columns = useMemo(() => [
     { key: 'customer', header: 'Customer' },
@@ -49,9 +46,6 @@ export default function RevenueByCustomer() {
             {routeCodes.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         </label>
-        <label className="flex flex-col"><span className="field-label">Search customer</span>
-          <input className="field" placeholder="name / route…" value={q} onChange={(e) => setQ(e.target.value)} />
-        </label>
       </div>
 
       <AsyncSection loading={loading || opts.loading} error={error} data={k ? [k] : null} reload={reload} minEmpty>
@@ -67,7 +61,7 @@ export default function RevenueByCustomer() {
               bars={isAllTime
                 ? [{ key: 'invoiced', label: 'Invoiced', color: '#10B981' }, { key: 'remaining', label: 'Remaining', color: '#F59E0B' }]
                 : [{ key: 'invoiced', label: 'Invoiced', color: '#10B981' }]} />
-            <DataTable columns={columns} rows={filtered} exportFilename="revenue-by-customer" searchable={false} initialSort={{ key: 'invoiced', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
+            <DataTable columns={columns} rows={rows} exportFilename="revenue-by-customer" searchable searchPlaceholder="Search customer / route…" initialSort={{ key: 'invoiced', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
           </div>
         )}
       </AsyncSection>

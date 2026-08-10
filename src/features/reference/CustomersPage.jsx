@@ -143,7 +143,6 @@ function CustomerDetailModal({ customerId, onClose }) {
 }
 
 export default function Customers() {
-  const [q, setQ] = useState('');
   const [range, setRange] = useState({ preset: 'all_time', from: '', to: '' });
   const [selected, setSelected] = useState(null);
   const [job, setJob] = useState(null);
@@ -159,7 +158,7 @@ export default function Customers() {
   const { from, to } = range;
 
   const { data, loading, error, reload } = useApi(() => biService.customers({ from: from || undefined, to: to || undefined }), [from, to]);
-  const rows = (data || []).filter((c) => !q || `${c.customerName} ${c.routeStarAccountNumber} ${c.routeStarCustomerId}`.toLowerCase().includes(q.toLowerCase()));
+  const rows = data || [];
 
   const fetchStatus = useCallback(async () => {
     try { const res = await biService.customerAccountSyncStatus(); setJob(res?.data || null); return res?.data || null; }
@@ -261,14 +260,13 @@ export default function Customers() {
       />
       <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} />
-        <input className="field grow max-w-sm" placeholder="Search name / account # / RouteStar ID…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       {msg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{running && <RefreshCw size={14} className="animate-spin" />}{msg}</div>}
       {cdMsg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{cdRunning && <RefreshCw size={14} className="animate-spin" />}{cdMsg}</div>}
       {deleteMsg && <div className="card p-3 mb-4 text-sm text-dark-600 flex items-center gap-2">{deleteMsg}</div>}
 
       <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
-        {() => <DataTable columns={columns} rows={rows} exportFilename="customers" searchable={false} initialSort={{ key: 'customerName', dir: 'asc' }} onRowClick={(r) => setSelected(r.routeStarCustomerId)} />}
+        {() => <DataTable columns={columns} rows={rows} exportFilename="customers" searchable searchPlaceholder="Search name / account # / RouteStar ID…" initialSort={{ key: 'customerName', dir: 'asc' }} onRowClick={(r) => setSelected(r.routeStarCustomerId)} />}
       </AsyncSection>
 
       {selected && <CustomerDetailModal customerId={selected} onClose={() => setSelected(null)} />}

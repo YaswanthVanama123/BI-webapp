@@ -76,6 +76,15 @@ export default function CompanyDistances() {
     }
   };
 
+  const onRetryFailed = async () => {
+    try {
+      const res = await biService.retryFailedCompanyDistances();
+      setJob(res?.data?.job || { running: true, phase: 'syncing' });
+    } catch (e) {
+      setJob({ running: false, phase: 'error', error: e?.message || 'could not start' });
+    }
+  };
+
   const totalPages = pageMeta?.totalPages || 1;
   const filtered = pageMeta?.total ?? 0;
   const msg = jobMessage(job);
@@ -90,14 +99,22 @@ export default function CompanyDistances() {
       <PageHeader
         title="Distances / Driving Time"
         subtitle="RouteStar from→to company pairs (from the enviromaster mapdistance data). Distance is from RouteStar; driving time is null until you Sync. Sync runs in the background (keeps going if you refresh) and computes only the pairs still pending."
-        actions={<button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Syncing…' : 'Sync with Mapbox'}</button>}
+        actions={<div className="flex gap-2">
+          {meta?.failed > 0 && (
+            <button className="btn-secondary" disabled={running} onClick={onRetryFailed} title="Re-queue and re-run only the pairs where Mapbox previously failed / had no coordinates">
+              <RefreshCw size={16} className={running ? 'animate-spin' : ''} /> Retry failed ({formatNumber(meta.failed)})
+            </button>
+          )}
+          <button className="btn-primary" disabled={running} onClick={onSync}><RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Syncing…' : 'Sync with Mapbox'}</button>
+        </div>}
       />
 
       {meta && (
-        <div className="grid grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-2 gap-4 mb-5 lg:grid-cols-4">
           <StatCard label="Total pairs" value={formatNumber(meta.total)} tone="info" />
           <StatCard label="Synced" value={formatNumber(meta.synced)} tone="success" />
           <StatCard label="Pending (null)" value={formatNumber(meta.pending)} tone={meta.pending ? 'warning' : 'success'} />
+          <StatCard label="Mapbox failed" value={formatNumber(meta.failed || 0)} sublabel="retryable" tone={meta.failed ? 'danger' : 'success'} />
         </div>
       )}
 

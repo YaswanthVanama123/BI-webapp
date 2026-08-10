@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
-import useDebounce from '@/hooks/useDebounce';
 import { PageHeader, StatCard } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
@@ -31,14 +30,12 @@ export default function CustomerOverview() {
   const opts = useApi(() => biService.driveTimeOptions(), []);
   const [range, setRange] = useState(defaultRange());
   const [routeCode, setRouteCode] = useState('all');
-  const [q, setQ] = useState('');
   const [selected, setSelected] = useState(null);
   const { from, to } = range;
-  const dq = useDebounce(q, 400);
 
   const { data, loading, error, reload } = useApi(
-    () => biService.customersOverview({ from, to, routeCode: routeCode === 'all' ? undefined : routeCode, q: dq || undefined }),
-    [from, to, routeCode, dq],
+    () => biService.customersOverview({ from, to, routeCode: routeCode === 'all' ? undefined : routeCode }),
+    [from, to, routeCode],
   );
   const routeCodes = (opts.data && opts.data.routeCodes) || [];
   const k = data && data.kpis;
@@ -61,9 +58,6 @@ export default function CustomerOverview() {
             <option value="all">All routes</option>
             {routeCodes.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
-        </label>
-        <label className="flex flex-col"><span className="field-label">Search customer</span>
-          <input className="field" placeholder="name / route…" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
       </div>
 
@@ -97,12 +91,12 @@ export default function CustomerOverview() {
             <div>
               <div className="field-label mb-1">New customers created ({newCustomers.length})</div>
               {newCustomers.length
-                ? <DataTable columns={newCustomerColumns} rows={newCustomers} exportFilename="new-customers" searchable={false} initialSort={{ key: 'createdDate', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
+                ? <DataTable columns={newCustomerColumns} rows={newCustomers} exportFilename="new-customers" searchable searchPlaceholder="Search customer / account…" initialSort={{ key: 'createdDate', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
                 : <div className="card p-3 text-sm text-dark-400">No new customers created in this period.</div>}
             </div>
             <div>
               <div className="field-label mb-1">All active customers ({filtered.length})</div>
-              <DataTable columns={columns} rows={filtered} exportFilename="customer-overview" searchable={false} initialSort={{ key: 'invoices', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
+              <DataTable columns={columns} rows={filtered} exportFilename="customer-overview" searchable searchPlaceholder="Search customer / route…" initialSort={{ key: 'invoices', dir: 'desc' }} onRowClick={(r) => setSelected(r)} />
             </div>
           </div>
         )}
