@@ -14,21 +14,23 @@ export function DateRangeFilter({ value, onChange, min, max, className }) {
   };
 
   return (
-    <div className={clsx('flex flex-wrap items-end gap-3', className)}>
-      <div className="flex flex-col">
+    <div className={clsx('flex flex-wrap items-end gap-3 min-w-0', className)}>
+      <div className="flex flex-col min-w-0">
         <span className="field-label">Period</span>
-        <div className="inline-flex rounded-md border border-dark-300 overflow-hidden">
-          {DATE_PRESETS.map((p) => (
-            <button
-              key={p.value}
-              type="button"
-              onClick={() => selectPreset(p.value)}
-              className={clsx('px-3 py-2 text-sm border-r border-dark-200 last:border-r-0 whitespace-nowrap',
-                preset === p.value ? 'bg-primary-600 text-white' : 'bg-white text-dark-600 hover:bg-dark-50')}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div className="overflow-x-auto no-scrollbar">
+          <div className="flex flex-nowrap gap-1 w-max">
+            {DATE_PRESETS.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => selectPreset(p.value)}
+                className={clsx('px-3 py-2 text-sm rounded-md border whitespace-nowrap',
+                  preset === p.value ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-dark-600 border-dark-300 hover:bg-dark-50')}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       {preset === 'custom' && (

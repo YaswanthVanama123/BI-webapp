@@ -55,10 +55,10 @@ function routeColumns(routes) {
   return ordered.map((k) => ({ key: k, header: k.replace(/\.$/, ''), render: (r) => (r[k] != null && r[k] !== '' ? r[k] : '—') }));
 }
 
-function TabBtn({ active, first, onClick, children }) {
+function TabBtn({ active, onClick, children }) {
   return (
     <button type="button" onClick={onClick}
-      className={clsx('px-4 py-2 text-sm', !first && 'border-l border-dark-200', active ? 'bg-primary-600 text-white' : 'bg-white text-dark-600 hover:bg-dark-50')}>
+      className={clsx('px-4 py-2 text-sm rounded-md border whitespace-nowrap', active ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-dark-600 border-dark-300 hover:bg-dark-50')}>
       {children}
     </button>
   );
@@ -105,11 +105,13 @@ function CustomerDetailModal({ customerId, onClose }) {
               </div>
             )}
 
-            <div className="inline-flex rounded-md border border-dark-300 overflow-hidden">
-              <TabBtn first active={tab === 'invoices'} onClick={() => setTab('invoices')}>Invoices ({invoices.length})</TabBtn>
-              <TabBtn active={tab === 'items'} onClick={() => setTab('items')}>Items ({items.length})</TabBtn>
-              <TabBtn active={tab === 'routes'} onClick={() => setTab('routes')}>Routes ({d.routes?.length || 0})</TabBtn>
-              <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>Pricing ({d.pricing?.length || 0})</TabBtn>
+            <div className="overflow-x-auto no-scrollbar">
+              <div className="flex flex-nowrap gap-1 w-max">
+                <TabBtn active={tab === 'invoices'} onClick={() => setTab('invoices')}>Invoices ({invoices.length})</TabBtn>
+                <TabBtn active={tab === 'items'} onClick={() => setTab('items')}>Items ({items.length})</TabBtn>
+                <TabBtn active={tab === 'routes'} onClick={() => setTab('routes')}>Routes ({d.routes?.length || 0})</TabBtn>
+                <TabBtn active={tab === 'pricing'} onClick={() => setTab('pricing')}>Pricing ({d.pricing?.length || 0})</TabBtn>
+              </div>
             </div>
 
             {tab === 'invoices' && (

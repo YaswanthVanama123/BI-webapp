@@ -30,10 +30,10 @@ const itemColumns = [
   { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
 ];
 
-function TabBtn({ active, first, onClick, children }) {
+function TabBtn({ active, onClick, children }) {
   return (
     <button type="button" onClick={onClick}
-      className={clsx('px-4 py-2 text-sm', !first && 'border-l border-dark-200', active ? 'bg-primary-600 text-white' : 'bg-white text-dark-600 hover:bg-dark-50')}>
+      className={clsx('px-4 py-2 text-sm rounded-md border whitespace-nowrap', active ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-dark-600 border-dark-300 hover:bg-dark-50')}>
       {children}
     </button>
   );
@@ -66,10 +66,12 @@ export default function DrillModal({ title, subtitle, filter, range, onClose, de
               {showCustomers && <StatCard label="Customers" value={formatNumber(k.customers)} />}
               <StatCard label="Items" value={formatNumber(k.items)} />
             </div>
-            <div className="inline-flex rounded-md border border-dark-300 overflow-hidden">
-              {showCustomers && <TabBtn first active={tab === 'customers'} onClick={() => setTab('customers')}>Customers ({customers.length})</TabBtn>}
-              <TabBtn first={!showCustomers} active={tab === 'invoices'} onClick={() => setTab('invoices')}>Invoices ({invoices.length})</TabBtn>
-              <TabBtn active={tab === 'items'} onClick={() => setTab('items')}>Items ({items.length})</TabBtn>
+            <div className="overflow-x-auto no-scrollbar">
+              <div className="flex flex-nowrap gap-1 w-max">
+                {showCustomers && <TabBtn active={tab === 'customers'} onClick={() => setTab('customers')}>Customers ({customers.length})</TabBtn>}
+                <TabBtn active={tab === 'invoices'} onClick={() => setTab('invoices')}>Invoices ({invoices.length})</TabBtn>
+                <TabBtn active={tab === 'items'} onClick={() => setTab('items')}>Items ({items.length})</TabBtn>
+              </div>
             </div>
             {tab === 'customers' && (
               <DataTable columns={customerColumns} rows={customers} exportFilename="drill-customers" onRowClick={(r) => setDrillCustomer(r)} initialSort={{ key: 'invoiced', dir: 'desc' }} />

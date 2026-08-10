@@ -5,7 +5,7 @@ export function RouteTabs({ routes = [], value, onChange, allLabel = 'All routes
   const active = value || 'all';
   const tabs = ['all', ...routes];
   return (
-    <div className={clsx('flex flex-wrap gap-1 border-b border-dark-200 overflow-x-auto', className)}>
+    <div className={clsx('flex flex-nowrap gap-x-1 border-b border-dark-200 overflow-x-auto no-scrollbar', className)}>
       {tabs.map((t) => (
         <button
           key={t}
