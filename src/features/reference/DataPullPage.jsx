@@ -26,12 +26,12 @@ const columns = [
   { key: 'serviceCategory', header: 'Service category', render: (r) => r.serviceCategory || '—' },
   { key: 'serviceFrequency', header: 'Service frequency', render: (r) => r.serviceFrequency || '—' },
   { key: 'servicePhase', header: 'Service phase', render: (r) => r.servicePhase || '—' },
-  { key: 'revenueAmount', header: 'Revenue', align: 'right', render: (r) => formatCurrency(r.revenueAmount) },
-  { key: 'chemicalSupplyCost', header: 'Chemical/supply cost', align: 'right', render: (r) => (r.chemicalSupplyCost != null ? formatCurrency(r.chemicalSupplyCost) : '—') },
+  { key: 'revenueAmount', header: 'Revenue', align: 'right', render: (r) => formatCurrency(r.revenueAmount), csv: (r) => formatCurrency(r.revenueAmount) },
+  { key: 'chemicalSupplyCost', header: 'Chemical/supply cost', align: 'right', render: (r) => (r.chemicalSupplyCost != null ? formatCurrency(r.chemicalSupplyCost) : '—'), csv: (r) => (r.chemicalSupplyCost != null ? formatCurrency(r.chemicalSupplyCost) : '') },
   { key: 'accountStatus', header: 'Account status', render: (r) => r.accountStatus || '—' },
   { key: 'statusDate', header: 'Status date', render: (r) => (r.statusDate ? formatDateShort(r.statusDate) : '—') },
   { key: 'billingCadence', header: 'Billing cadence', render: (r) => r.billingCadence || '—' },
-  { key: 'billingAmount', header: 'Billing amount', align: 'right', render: (r) => (r.billingAmount != null ? formatCurrency(r.billingAmount) : '—') },
+  { key: 'billingAmount', header: 'Billing amount', align: 'right', render: (r) => (r.billingAmount != null ? formatCurrency(r.billingAmount) : '—'), csv: (r) => (r.billingAmount != null ? formatCurrency(r.billingAmount) : '') },
 ];
 
 const PAGE_SIZE = 50;
