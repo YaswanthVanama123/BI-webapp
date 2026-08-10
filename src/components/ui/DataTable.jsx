@@ -10,6 +10,7 @@ export default function DataTable({
   columns, rows, exportFilename, exportable = true, initialSort, emptyMessage, onRowClick,
   paginated = true, pageSize = 25, searchable = true, searchPlaceholder = 'Search…',
   serverSide = false, serverTotal = 0, page: controlledPage = 1, onPageChange, onExportAll, onServerSearch,
+  showIndex = true, indexHeader = 'S.No',
 }) {
   const [sort, setSort] = useState(initialSort || null);
   const [page, setPage] = useState(1);
@@ -57,6 +58,10 @@ export default function DataTable({
 
   const toggleSort = (key) => setSort((s) => (s?.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
 
+  const exportColumns = showIndex
+    ? [{ key: '__sno', header: indexHeader, csv: (_r, ri) => String(ri + 1), accessor: (_r, ri) => ri + 1 }, ...columns]
+    : columns;
+
   return (
     <div className="card overflow-hidden">
       {(exportable || showSearch) && (
@@ -72,13 +77,16 @@ export default function DataTable({
             )}
             <span className="text-xs text-dark-400 whitespace-nowrap">{total} rows</span>
           </div>
-          {exportable && <ExportButton rows={sorted} fetchRows={onExportAll} columns={columns} filename={exportFilename || 'export'} />}
+          {exportable && <ExportButton rows={sorted} fetchRows={onExportAll} columns={exportColumns} filename={exportFilename || 'export'} />}
         </div>
       )}
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-dark-50 text-dark-500">
             <tr>
+              {showIndex && (
+                <th className="px-4 py-2.5 font-medium text-right whitespace-nowrap select-none">{indexHeader}</th>
+              )}
               {columns.map((c) => (
                 <th
                   key={c.key}
@@ -102,6 +110,9 @@ export default function DataTable({
                 className={clsx('hover:bg-primary-50/40', onRowClick && 'cursor-pointer')}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
+                {showIndex && (
+                  <td className="px-4 py-2.5 text-right tabular-nums text-dark-400 whitespace-nowrap">{(current - 1) * effSize + i + 1}</td>
+                )}
                 {columns.map((c) => (
                   <td key={c.key} className={clsx('px-4 py-2.5 text-dark-700 whitespace-nowrap', c.align === 'right' && 'text-right tabular-nums')}>
                     {c.render ? c.render(row) : c.accessor ? c.accessor(row) : row[c.key]}

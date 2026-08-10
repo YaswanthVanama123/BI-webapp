@@ -35,8 +35,8 @@ function excelValue(v) {
   return s;
 }
 
-function cellFor(col, row) {
-  const raw = col.csv ? col.csv(row) : col.accessor ? col.accessor(row) : row[col.key];
+function cellFor(col, row, ri) {
+  const raw = col.csv ? col.csv(row, ri) : col.accessor ? col.accessor(row, ri) : row[col.key];
   return excelValue(raw);
 }
 
@@ -45,7 +45,7 @@ export async function exportRowsToExcel(rows, columns, filenameBase = 'export') 
   const XLSX = mod.utils ? mod : mod.default;
   const cols = (columns || []).filter((c) => c.exportable !== false);
   const header = cols.map((c) => c.header || c.key);
-  const body = (rows || []).map((row) => cols.map((c) => cellFor(c, row)));
+  const body = (rows || []).map((row, ri) => cols.map((c) => cellFor(c, row, ri)));
   const aoa = [header, ...body];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   const lastRow = Math.max(0, aoa.length - 1);
@@ -64,10 +64,10 @@ export async function exportRowsToExcel(rows, columns, filenameBase = 'export') 
 
 export function exportRowsToCsv(rows, columns, filenameBase = 'export') {
   const cols = (columns || []).filter((c) => c.exportable !== false);
-  const records = (rows || []).map((row) => {
+  const records = (rows || []).map((row, ri) => {
     const rec = {};
     for (const col of cols) {
-      const raw = col.csv ? col.csv(row) : col.accessor ? col.accessor(row) : row[col.key];
+      const raw = col.csv ? col.csv(row, ri) : col.accessor ? col.accessor(row, ri) : row[col.key];
       rec[col.header || col.key] = normalizeCell(raw);
     }
     return rec;
