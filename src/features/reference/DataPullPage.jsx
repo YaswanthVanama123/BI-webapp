@@ -67,7 +67,7 @@ export default function DataPull() {
       <div className="text-xs text-dark-400 mb-3">
         Chemical/supply cost comes from an external source (EnviroMaster Store / Bigin) not yet connected — shown as “—”. Status date is the customer’s most recent activity date. Service phase is derived from frequency (recurring vs one-time).
       </div>
-      <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
+      <AsyncSection loading={loading} error={error} data={data} reload={reload}>
         {() => (
           <DataTable
             columns={columns}

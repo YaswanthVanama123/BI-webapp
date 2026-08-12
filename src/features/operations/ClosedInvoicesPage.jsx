@@ -119,7 +119,7 @@ export default function ClosedInvoices() {
         <DateRangeFilter value={range} onChange={setRange} />
       </div>
       <RouteTabs routes={routes} value={route} onChange={setRoute} allLabel="All" className="mb-4" />
-      <AsyncSection loading={loading} error={error} data={data} reload={reload} minEmpty>
+      <AsyncSection loading={loading} error={error} data={data} reload={reload}>
         {() => (
           <DataTable
             columns={columns}
