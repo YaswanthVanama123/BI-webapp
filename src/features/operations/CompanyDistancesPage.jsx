@@ -25,10 +25,11 @@ const columns = [
 
 function jobMessage(job) {
   if (!job) return null;
+  const discover = job.discoverError ? ` Pair discovery from invoices failed (${job.discoverError}) — some Drive Time legs may still be unresolved even though Pending reads 0.` : '';
   if (job.phase === 'discovering') return 'Sync running in background: discovering company pairs…';
-  if (job.phase === 'syncing') return `Sync running in background: ${formatNumber(job.synced || 0)} driving times computed, ${job.remaining != null ? formatNumber(job.remaining) : '…'} still pending. You can leave this page — it keeps running.`;
+  if (job.phase === 'syncing') return `Sync running in background: ${formatNumber(job.synced || 0)} driving times computed, ${job.remaining != null ? formatNumber(job.remaining) : '…'} still pending. You can leave this page — it keeps running.${discover}`;
   if (job.phase === 'error') return `Sync failed: ${job.error || 'error'}`;
-  if (job.phase === 'done') return `Sync complete: ${formatNumber(job.synced || 0)} driving times computed${job.failed ? `, ${formatNumber(job.failed)} could not be resolved` : ''}.`;
+  if (job.phase === 'done') return `Sync complete: ${formatNumber(job.synced || 0)} driving times computed${job.failed ? `, ${formatNumber(job.failed)} could not be resolved` : ''}.${discover}`;
   return null;
 }
 

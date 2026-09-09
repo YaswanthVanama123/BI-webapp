@@ -24,8 +24,10 @@ export default function RevenueByRoute() {
   const columns = useMemo(() => [
     { key: 'routeCode', header: 'Route' },
     { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
-    ...(isAllTime ? [{ key: 'remaining', header: 'Remaining', align: 'right', render: (r) => formatCurrency(r.remaining) }] : []),
-    { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
+    ...(isAllTime ? [
+      { key: 'remaining', header: 'Remaining', align: 'right', render: (r) => formatCurrency(r.remaining) },
+      { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
+    ] : []),
     { key: 'stops', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stops) },
     { key: 'customers', header: 'Customers', align: 'right', render: (r) => formatNumber(r.customers) },
   ], [isAllTime]);

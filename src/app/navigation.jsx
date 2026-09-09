@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, Gauge, MapPin, TrendingUp, Route as RouteIcon, Clock,
-  DollarSign, PieChart, Layers, Users, Wallet, Coins, AlertTriangle, Tags,
+  DollarSign, PieChart, Layers, Users, Wallet, Tags,
   Database, RefreshCw, FileText, ClipboardCheck, Navigation, Milestone, Network, UserCheck, ShieldCheck,
 } from 'lucide-react';
 
@@ -20,15 +20,10 @@ import RevenueByCustomerPage from '@/features/revenue/RevenueByCustomerPage';
 import RevenuePerStopPage from '@/features/revenue/RevenuePerStopPage';
 import ItemFrequencyPage from '@/features/revenue/ItemFrequencyPage';
 import PayrollCostPage from '@/features/cost/PayrollCostPage';
-import LaborPerStopPage from '@/features/cost/LaborPerStopPage';
-import RouteProfitabilityPage from '@/features/cost/RouteProfitabilityPage';
 import PayrollHoursPage from '@/features/cost/PayrollHoursPage';
 import CustomersPage from '@/features/reference/CustomersPage';
 import CustomerOverviewPage from '@/features/reference/CustomerOverviewPage';
 import DataPullPage from '@/features/reference/DataPullPage';
-import DataQualityPage from '@/features/governance/DataQualityPage';
-import UnmappedItemsPage from '@/features/governance/UnmappedItemsPage';
-import ImportBatchesPage from '@/features/governance/ImportBatchesPage';
 import SyncStatusPage from '@/features/governance/SyncStatusPage';
 import ConnectionsPage from '@/features/governance/ConnectionsPage';
 import UserManagementPage from '@/features/admin/UserManagementPage';
@@ -66,8 +61,6 @@ export const NAV = [
     items: [
       { to: '/payroll', label: 'Payroll Cost', icon: Wallet, element: <PayrollCostPage /> },
       { to: '/payroll-hours', label: 'Payroll Hours', icon: Clock, hideFilters: true, element: <PayrollHoursPage /> },
-      { to: '/labor-per-stop', label: 'Labor Cost per Stop', icon: Coins, element: <LaborPerStopPage /> },
-      { to: '/profitability', label: 'Route Profitability', icon: TrendingUp, element: <RouteProfitabilityPage /> },
     ],
   },
   {
@@ -82,9 +75,6 @@ export const NAV = [
     section: 'Governance',
     items: [
       { to: '/connections', label: 'Data Connections', icon: Network, hideFilters: true, element: <ConnectionsPage /> },
-      { to: '/data-quality', label: 'Data Quality', icon: AlertTriangle, hideFilters: true, element: <DataQualityPage /> },
-      { to: '/unmapped', label: 'Unmapped Items', icon: Tags, hideFilters: true, element: <UnmappedItemsPage /> },
-      { to: '/imports', label: 'Import Batches', icon: Database, hideFilters: true, element: <ImportBatchesPage /> },
       { to: '/sync', label: 'Sync Status', icon: RefreshCw, hideFilters: true, element: <SyncStatusPage /> },
     ],
   },

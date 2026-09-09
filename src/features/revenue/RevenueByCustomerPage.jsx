@@ -30,8 +30,10 @@ export default function RevenueByCustomer() {
     { key: 'routeCode', header: 'Route', render: (r) => (r.routes && r.routes.length ? r.routes.join(', ') : r.routeCode) },
     ...(isAllTime ? [{ key: 'expected', header: 'Expected (yr)', align: 'right', render: (r) => formatCurrency(r.expected) }] : []),
     { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
-    ...(isAllTime ? [{ key: 'remaining', header: 'Remaining', align: 'right', render: (r) => <span className={r.remaining < 0 ? 'text-success-700' : 'text-dark-700'}>{formatCurrency(r.remaining)}</span> }] : []),
-    { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
+    ...(isAllTime ? [
+      { key: 'remaining', header: 'Remaining', align: 'right', render: (r) => <span className={r.remaining < 0 ? 'text-success-700' : 'text-dark-700'}>{formatCurrency(r.remaining)}</span> },
+      { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
+    ] : []),
     { key: 'invoices', header: 'Invoices', align: 'right', render: (r) => formatNumber(r.invoices) },
   ], [isAllTime]);
 
@@ -55,7 +57,9 @@ export default function RevenueByCustomer() {
               {isAllTime && <StatCard label="Expected (yr)" value={formatCurrency(k.expected)} tone="info" />}
               <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} tone="success" />
               {isAllTime && <StatCard label="Remaining" value={formatCurrency(k.remaining)} tone={k.remaining > 0 ? 'warning' : 'success'} />}
-              <StatCard label="Collected" value={k.collectedPct != null ? formatPercent(k.collectedPct) : '—'} sublabel={`${formatNumber(k.customers)} customers`} tone={pctTone(k.collectedPct)} />
+              {isAllTime
+                ? <StatCard label="Collected" value={k.collectedPct != null ? formatPercent(k.collectedPct) : '—'} sublabel={`${formatNumber(k.customers)} customers`} tone={pctTone(k.collectedPct)} />
+                : <StatCard label="Customers" value={formatNumber(k.customers)} />}
             </div>
             <BarChartCard title="Top 15 by invoiced revenue" data={topChart} xKey="customer"
               bars={isAllTime

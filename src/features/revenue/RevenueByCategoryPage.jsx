@@ -28,8 +28,10 @@ export default function RevenueByCategory() {
   const columns = useMemo(() => [
     { key: 'category', header: 'Category' },
     { key: 'invoiced', header: 'Invoiced', align: 'right', render: (r) => formatCurrency(r.invoiced) },
-    ...(isAllTime ? [{ key: 'remaining', header: 'Remaining', align: 'right', render: (r) => formatCurrency(r.remaining) }] : []),
-    { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
+    ...(isAllTime ? [
+      { key: 'remaining', header: 'Remaining', align: 'right', render: (r) => formatCurrency(r.remaining) },
+      { key: 'pct', header: 'Collected', align: 'right', render: (r) => (r.pct != null ? <Badge tone={pctTone(r.pct)}>{formatPercent(r.pct)}</Badge> : '—') },
+    ] : []),
   ], [isAllTime]);
 
   return (

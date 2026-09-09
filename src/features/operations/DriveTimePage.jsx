@@ -11,20 +11,22 @@ import { BarChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber, formatDateShort, statusTone, toNumber } from '@/utils/format';
 import DrillModal from '@/features/revenue/DrillModal';
 
+const NotRecorded = () => <span className="text-dark-400">Not recorded</span>;
+
 const legColumns = [
   { key: 'fromInvoiceNumber', header: 'From #' },
   { key: 'fromCustomer', header: 'From customer' },
   { key: 'toInvoiceNumber', header: 'To #' },
   { key: 'toCustomer', header: 'To customer' },
-  { key: 'fromDeparture', header: 'Departure', render: (r) => r.fromDeparture || '-' },
-  { key: 'toArrival', header: 'Next arrival', render: (r) => r.toArrival || '-' },
-  { key: 'observedGapMinutes', header: 'Observed gap', align: 'right', render: (r) => (r.observedGapMinutes != null ? formatMinutes(r.observedGapMinutes) : '-'), csv: (r) => formatMinutes(r.observedGapMinutes) },
-  { key: 'drivingMinutes', header: 'Driving', align: 'right', render: (r) => (r.drivingMinutes != null ? formatMinutes(r.drivingMinutes) : '-'), csv: (r) => formatMinutes(r.drivingMinutes) },
-  { key: 'distanceMiles', header: 'Miles', align: 'right', render: (r) => (r.distanceMiles != null ? formatNumber(r.distanceMiles) : '-'), csv: (r) => r.distanceMiles },
+  { key: 'fromDeparture', header: 'Departure', render: (r) => r.fromDeparture || <NotRecorded /> },
+  { key: 'toArrival', header: 'Next arrival', render: (r) => r.toArrival || <NotRecorded /> },
+  { key: 'observedGapMinutes', header: 'Observed gap', align: 'right', render: (r) => formatMinutes(r.observedGapMinutes ?? 0), csv: (r) => formatMinutes(r.observedGapMinutes ?? 0) },
+  { key: 'drivingMinutes', header: 'Driving', align: 'right', render: (r) => formatMinutes(r.drivingMinutes ?? 0), csv: (r) => formatMinutes(r.drivingMinutes ?? 0) },
+  { key: 'distanceMiles', header: 'Miles', align: 'right', render: (r) => formatNumber(r.distanceMiles ?? 0), csv: (r) => r.distanceMiles ?? 0 },
   {
     key: 'extraTimeMinutes', header: 'Extra (idle)', align: 'right',
-    render: (r) => (r.extraTimeMinutes != null ? <Badge tone={r.extraTimeMinutes > 15 ? 'warning' : 'neutral'}>{formatMinutes(r.extraTimeMinutes)}</Badge> : '-'),
-    csv: (r) => formatMinutes(r.extraTimeMinutes),
+    render: (r) => <Badge tone={(r.extraTimeMinutes ?? 0) > 15 ? 'warning' : 'neutral'}>{formatMinutes(r.extraTimeMinutes ?? 0)}</Badge>,
+    csv: (r) => formatMinutes(r.extraTimeMinutes ?? 0),
   },
   { key: 'status', header: 'Status', render: (r) => <Badge tone={statusTone(r.status)}>{r.status}</Badge> },
 ];
@@ -33,11 +35,11 @@ const summaryColumns = [
   { key: 'date', header: 'Completed', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
   { key: 'routeCode', header: 'Route' },
   { key: 'legCount', header: 'Legs', align: 'right', render: (r) => formatNumber(r.legCount) },
-  { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : '-'), csv: (r) => (r.invoiceNumbers || []).join(' ') },
-  { key: 'drivingMinutes', header: 'Driving', align: 'right', render: (r) => formatMinutes(r.drivingMinutes), csv: (r) => formatMinutes(r.drivingMinutes) },
-  { key: 'observedGapMinutes', header: 'Observed gap', align: 'right', render: (r) => formatMinutes(r.observedGapMinutes), csv: (r) => formatMinutes(r.observedGapMinutes) },
-  { key: 'extraTimeMinutes', header: 'Extra (idle)', align: 'right', render: (r) => <Badge tone={toNumber(r.extraTimeMinutes) > 60 ? 'warning' : 'neutral'}>{formatMinutes(r.extraTimeMinutes)}</Badge>, csv: (r) => formatMinutes(r.extraTimeMinutes) },
-  { key: 'distanceMiles', header: 'Miles', align: 'right', render: (r) => formatNumber(r.distanceMiles) },
+  { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : <NotRecorded />), csv: (r) => (r.invoiceNumbers || []).join(' ') },
+  { key: 'drivingMinutes', header: 'Driving', align: 'right', render: (r) => formatMinutes(r.drivingMinutes ?? 0), csv: (r) => formatMinutes(r.drivingMinutes ?? 0) },
+  { key: 'observedGapMinutes', header: 'Observed gap', align: 'right', render: (r) => formatMinutes(r.observedGapMinutes ?? 0), csv: (r) => formatMinutes(r.observedGapMinutes ?? 0) },
+  { key: 'extraTimeMinutes', header: 'Extra (idle)', align: 'right', render: (r) => <Badge tone={toNumber(r.extraTimeMinutes) > 60 ? 'warning' : 'neutral'}>{formatMinutes(r.extraTimeMinutes ?? 0)}</Badge>, csv: (r) => formatMinutes(r.extraTimeMinutes ?? 0) },
+  { key: 'distanceMiles', header: 'Miles', align: 'right', render: (r) => formatNumber(r.distanceMiles ?? 0) },
 ];
 
 const allLegColumns = [
@@ -124,6 +126,12 @@ export default function DriveTime() {
                 <StatCard label="Avg extra / leg" value={formatMinutes(kpi.avgExtra)} tone={kpi.avgExtra > 15 ? 'warning' : 'neutral'} />
                 <StatCard label="Distance" value={`${formatNumber(kpi.distance)} mi`} />
               </div>
+
+              {kpi.unsyncedLegs > 0 && (
+                <Card className="text-sm text-dark-600">
+                  <span className="font-semibold text-warning-700">{formatNumber(kpi.unsyncedLegs)}</span> of {formatNumber(kpi.legs)} legs have no Mapbox distance yet — the customer pair is not in the distance table, so Driving / Miles / Extra show 0 and those legs are excluded from the totals above. The “Pending (null)” tile on <span className="font-semibold">Distances / Driving Time</span> only counts pairs that already exist, so it can read 0 while these legs are still unresolved. Run <span className="font-semibold">Sync</span> there to discover and fill them in.
+                </Card>
+              )}
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <BarChartCard title="Extra (idle) time by route" subtitle="gap beyond driving, over range" data={perRoute} xKey="routeCode" bars={[{ key: 'extra', label: 'Extra (min)', color: '#F59E0B' }]} valueFormatter={formatMinutes} />

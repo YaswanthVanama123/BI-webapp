@@ -11,14 +11,16 @@ import { BarChartCard, PieChartCard } from '@/components/charts';
 import { formatMinutes, formatNumber, formatPercent, formatDateShort, statusTone } from '@/utils/format';
 import InvoiceLinesModal from '@/features/revenue/InvoiceLinesModal';
 
+const NotRecorded = () => <span className="text-dark-400">Not recorded</span>;
+
 const stopColumns = [
   { key: 'seq', header: '#', align: 'right', accessor: (r) => r.__seq },
   { key: 'invoiceNumber', header: 'Invoice #' },
   { key: 'customer', header: 'Customer' },
-  { key: 'checkIn', header: 'Check-in', render: (r) => r.checkIn || '-' },
-  { key: 'checkOut', header: 'Check-out', render: (r) => r.checkOut || '-' },
-  { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => (r.serviceMinutes != null ? formatMinutes(r.serviceMinutes) : '-'), csv: (r) => formatMinutes(r.serviceMinutes) },
-  { key: 'gapToNextMinutes', header: 'Idle to next', align: 'right', render: (r) => (r.gapToNextMinutes != null ? formatMinutes(r.gapToNextMinutes) : '-'), csv: (r) => formatMinutes(r.gapToNextMinutes) },
+  { key: 'checkIn', header: 'Check-in', render: (r) => r.checkIn || <NotRecorded /> },
+  { key: 'checkOut', header: 'Check-out', render: (r) => r.checkOut || <NotRecorded /> },
+  { key: 'serviceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.serviceMinutes ?? 0), csv: (r) => formatMinutes(r.serviceMinutes ?? 0) },
+  { key: 'gapToNextMinutes', header: 'Idle to next', align: 'right', render: (r) => formatMinutes(r.gapToNextMinutes ?? 0), csv: (r) => formatMinutes(r.gapToNextMinutes ?? 0) },
   { key: 'elapsedStatus', header: 'Check', render: (r) => <Badge tone={statusTone(r.elapsedStatus)}>{r.elapsedStatus}</Badge> },
 ];
 
@@ -33,16 +35,16 @@ const routeSummaryColumns = [
   { key: 'date', header: 'Completed', render: (r) => formatDateShort(r.date), sortValue: (r) => r.date || '' },
   { key: 'route', header: 'Route' },
   { key: 'stopCount', header: 'Stops', align: 'right', render: (r) => formatNumber(r.stopCount) },
-  { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : '-'), csv: (r) => (r.invoiceNumbers || []).join(' ') },
-  { key: 'firstCheckIn', header: 'First in', render: (r) => r.firstCheckIn || '-' },
-  { key: 'lastCheckOut', header: 'Last out', render: (r) => r.lastCheckOut || '-' },
-  { key: 'spanMinutes', header: 'Day span', align: 'right', render: (r) => (r.spanMinutes != null ? formatMinutes(r.spanMinutes) : '-'), csv: (r) => formatMinutes(r.spanMinutes) },
-  { key: 'totalServiceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.totalServiceMinutes), csv: (r) => formatMinutes(r.totalServiceMinutes) },
-  { key: 'totalGapMinutes', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.totalGapMinutes || 0), csv: (r) => formatMinutes(r.totalGapMinutes || 0) },
+  { key: 'invoiceNumbers', header: 'Invoice #', render: (r) => ((r.invoiceNumbers && r.invoiceNumbers.length) ? r.invoiceNumbers.join(', ') : <NotRecorded />), csv: (r) => (r.invoiceNumbers || []).join(' ') },
+  { key: 'firstCheckIn', header: 'First in', render: (r) => r.firstCheckIn || <NotRecorded /> },
+  { key: 'lastCheckOut', header: 'Last out', render: (r) => r.lastCheckOut || <NotRecorded /> },
+  { key: 'spanMinutes', header: 'Day span', align: 'right', render: (r) => formatMinutes(r.spanMinutes ?? 0), csv: (r) => formatMinutes(r.spanMinutes ?? 0) },
+  { key: 'totalServiceMinutes', header: 'Service', align: 'right', render: (r) => formatMinutes(r.totalServiceMinutes ?? 0), csv: (r) => formatMinutes(r.totalServiceMinutes ?? 0) },
+  { key: 'totalGapMinutes', header: 'Idle', align: 'right', render: (r) => formatMinutes(r.totalGapMinutes ?? 0), csv: (r) => formatMinutes(r.totalGapMinutes ?? 0) },
   {
     key: 'servicePct', header: 'Service % of day', align: 'right',
-    render: (r) => (r.servicePct != null ? <Badge tone={r.servicePct >= 60 ? 'success' : 'warning'}>{formatPercent(r.servicePct)}</Badge> : '-'),
-    csv: (r) => r.servicePct,
+    render: (r) => <Badge tone={(r.servicePct ?? 0) >= 60 ? 'success' : 'warning'}>{formatPercent(r.servicePct ?? 0)}</Badge>,
+    csv: (r) => r.servicePct ?? 0,
   },
   { key: 'flaggedStops', header: 'Flagged', align: 'right', render: (r) => (r.flaggedStops ? <Badge tone="warning">{r.flaggedStops}</Badge> : '0') },
 ];
