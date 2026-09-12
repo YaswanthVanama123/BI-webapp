@@ -104,7 +104,7 @@ export default function Checkins() {
 
   return (
     <div>
-      <PageHeader title="Check-in / Check-out" subtitle="Per route (NRV1…) per day: day span = first arrival → last departure; idle = gaps between consecutive stops; service% = on-site ÷ day span." />
+      <PageHeader title="Check-in / Check-out" subtitle="Per route (NRV1…) per day: day span = first arrival → last departure; idle = day span − on-site time; service% = on-site ÷ day span." />
 
       <div className="card p-3 mb-3 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={earliest} max={latest} />
@@ -121,13 +121,13 @@ export default function Checkins() {
               <StatCard label="Stops" value={formatNumber(kpi.totalStops)} tone="success" />
               <StatCard label="Service time" value={formatMinutes(kpi.totalService)} sublabel="on-site" />
               <StatCard label="Avg / stop" value={formatMinutes(kpi.avgServicePerStop)} />
-              <StatCard label="Idle between stops" value={formatMinutes(kpi.totalGap)} tone="warning" />
+              <StatCard label="Idle (in span)" value={formatMinutes(kpi.totalGap)} tone="warning" />
               <StatCard label="Service % of day" value={formatPercent(kpi.servicePct)} tone={kpi.servicePct >= 60 ? 'success' : 'warning'} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <BarChartCard title="Day span per route (min)" subtitle="total first-in → last-out over range" data={perRoute} xKey="route" bars={[{ key: 'span', label: 'Day span (min)', color: '#2563EB' }]} valueFormatter={formatMinutes} />
-              <BarChartCard title="Time on-site vs idle between stops (min)" subtitle="over range" data={perRoute} xKey="route"
+              <BarChartCard title="Time on-site vs idle within the day span (min)" subtitle="over range" data={perRoute} xKey="route"
                 bars={[{ key: 'service', label: 'Service (min)', color: '#10B981', stackId: 't' }, { key: 'gap', label: 'Idle (min)', color: '#F59E0B', stackId: 't' }]} valueFormatter={formatMinutes} />
             </div>
 
