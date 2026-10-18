@@ -12,6 +12,7 @@ import StopVolumeTrendsPage from '@/features/operations/StopVolumeTrendsPage';
 import ServiceVsDriveTimePage from '@/features/operations/ServiceVsDriveTimePage';
 import ClosedInvoicesPage from '@/features/operations/ClosedInvoicesPage';
 import CheckinsPage from '@/features/operations/CheckinsPage';
+import RouteCalendarPage from '@/features/operations/RouteCalendarPage';
 import DriveTimePage from '@/features/operations/DriveTimePage';
 import CompanyDistancesPage from '@/features/operations/CompanyDistancesPage';
 import RevenueByCategoryPage from '@/features/revenue/RevenueByCategoryPage';
@@ -28,10 +29,13 @@ import SyncStatusPage from '@/features/governance/SyncStatusPage';
 import ConnectionsPage from '@/features/governance/ConnectionsPage';
 import UserManagementPage from '@/features/admin/UserManagementPage';
 
-export const NAV = [
+const SECTIONS = [
   {
     section: 'Overview',
-    items: [{ to: '/', end: true, label: 'Dashboard', icon: LayoutDashboard, hideFilters: true, element: <DashboardPage /> }],
+    items: [
+      { to: '/', end: true, label: 'Dashboard', icon: LayoutDashboard, hideFilters: true, element: <RouteCalendarPage /> },
+      { to: '/', end: true, label: 'Dashboard', icon: LayoutDashboard, hideFilters: true, hidden: true, element: <DashboardPage /> },
+    ],
   },
   {
     section: 'Operations',
@@ -85,6 +89,10 @@ export const NAV = [
     ],
   },
 ];
+
+export const NAV = SECTIONS
+  .map((g) => ({ ...g, items: g.items.filter((it) => !it.hidden) }))
+  .filter((g) => g.items.length > 0);
 
 export const NAV_ITEMS = NAV.flatMap((g) => g.items);
 export const HIDE_FILTER_PATHS = new Set(NAV_ITEMS.filter((i) => i.hideFilters).map((i) => i.to));

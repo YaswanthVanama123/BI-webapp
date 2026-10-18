@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { NAV_ITEMS } from './navigation';
-import NotFoundPage from './NotFoundPage';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/features/auth/LoginPage';
 import LandingPage from '@/features/auth/LandingPage';
@@ -39,7 +38,7 @@ function Gate() {
         {items.map((it) => (it.to === '/'
           ? <Route key="index" index element={it.element} />
           : <Route key={it.to} path={it.to} element={it.element} />))}
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );

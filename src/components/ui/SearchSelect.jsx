@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { ChevronDown, Search, X } from 'lucide-react';
 
-export function SearchSelect({ value, onChange, options = [], placeholder = 'All', allLabel = 'All', className }) {
+export function SearchSelect({ value, onChange, options = [], placeholder = 'All', allLabel = 'All', clearable = true, className }) {
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState('');
   const ref = useRef(null);
@@ -27,7 +27,7 @@ export function SearchSelect({ value, onChange, options = [], placeholder = 'All
       <button type="button" className="field flex items-center justify-between gap-2 text-left min-w-[240px]" onClick={() => setOpen((o) => !o)}>
         <span className={clsx('truncate', !selected && 'text-dark-400')}>{selected ? selected.label : placeholder}</span>
         <span className="flex items-center gap-1 shrink-0">
-          {selected && <X size={14} className="text-dark-400 hover:text-dark-600" onClick={(e) => { e.stopPropagation(); pick(''); }} />}
+          {selected && clearable && <X size={14} className="text-dark-400 hover:text-dark-600" onClick={(e) => { e.stopPropagation(); pick(''); }} />}
           <ChevronDown size={16} className="text-dark-400" />
         </span>
       </button>
@@ -38,9 +38,11 @@ export function SearchSelect({ value, onChange, options = [], placeholder = 'All
             <input autoFocus className="w-full text-sm outline-none" placeholder="Search…" value={term} onChange={(e) => setTerm(e.target.value)} />
           </div>
           <ul className="max-h-64 overflow-auto py-1 text-sm">
-            <li>
-              <button type="button" className={clsx('w-full text-left px-3 py-1.5 hover:bg-dark-50', !value ? 'text-primary-700 bg-primary-50' : 'text-dark-500')} onClick={() => pick('')}>{allLabel}</button>
-            </li>
+            {clearable && (
+              <li>
+                <button type="button" className={clsx('w-full text-left px-3 py-1.5 hover:bg-dark-50', !value ? 'text-primary-700 bg-primary-50' : 'text-dark-500')} onClick={() => pick('')}>{allLabel}</button>
+              </li>
+            )}
             {filtered.map((o) => (
               <li key={o.value}>
                 <button type="button" className={clsx('w-full text-left px-3 py-1.5 hover:bg-dark-50 truncate', o.value === value && 'bg-primary-50 text-primary-700')} onClick={() => pick(o.value)}>{o.label}</button>

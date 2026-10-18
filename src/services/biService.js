@@ -17,6 +17,7 @@ const biService = {
   checkins: (f) => get('/checkins', f),
   checkinStops: (f) => get('/checkins/stops', f),
   checkinOptions: () => get('/checkins/options'),
+  routeCalendar: (f) => get('/route-calendar', f),
   driveTime: (f) => get('/route-drive-time', f),
   driveTimeLegs: (f) => get('/route-drive-time/legs', f),
   driveTimeOptions: () => get('/route-drive-time/options'),
