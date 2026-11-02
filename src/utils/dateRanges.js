@@ -25,6 +25,16 @@ export function rangeForPreset(preset, today = new Date(), bounds = {}) {
   return { from: iso(from), to: iso(d) };
 }
 
+export function rangeLabel(range) {
+  if (!range) return '';
+  if (range.preset && range.preset !== 'custom') {
+    const p = DATE_PRESETS.find((x) => x.value === range.preset);
+    if (p) return p.label;
+  }
+  const fmt = (s) => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
+  return range.from && range.to ? `${fmt(range.from)} – ${fmt(range.to)}` : '';
+}
+
 export function defaultRange() {
   const r = rangeForPreset('this_year');
   return { preset: 'this_year', from: r.from, to: r.to };

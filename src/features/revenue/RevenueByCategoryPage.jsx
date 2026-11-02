@@ -5,7 +5,7 @@ import { PageHeader, StatCard, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
-import { defaultRange } from '@/utils/dateRanges';
+import { defaultRange, rangeLabel } from '@/utils/dateRanges';
 import { BarChartCard, PieChartCard } from '@/components/charts';
 import { formatCurrency, formatNumber, formatPercent } from '@/utils/format';
 import DrillModal from './DrillModal';
@@ -36,7 +36,7 @@ export default function RevenueByCategory() {
 
   return (
     <div>
-      <PageHeader title="Revenue by Category" subtitle="Invoiced revenue per service category for the selected period (Remaining vs annual expected shows on All time). Click a category for its customers, invoices and items." />
+      <PageHeader title="Revenue by Category" subtitle="Invoiced revenue (before tax) per service item for the selected period. If an invoice's line items don't add up to its subtotal, the difference shows as “Not matched to line items” so the rows add up to the same total as every other screen. Remaining vs annual expected shows on All time." />
       <div className="card p-3 mb-5 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={opts.data?.earliestDate} max={opts.data?.latestDate} />
         <label className="flex flex-col"><span className="field-label">Route</span>
@@ -52,7 +52,7 @@ export default function RevenueByCategory() {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {isAllTime && <StatCard label="Expected (yr)" value={formatCurrency(k.expected)} tone="info" />}
-              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} tone="success" />
+              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} sublabel={`${rangeLabel(range)} · before tax`} tone="success" />
               {isAllTime && <StatCard label="Remaining" value={formatCurrency(k.remaining)} tone={k.remaining > 0 ? 'warning' : 'success'} />}
               <StatCard label="Categories" value={formatNumber(k.categories)} />
             </div>

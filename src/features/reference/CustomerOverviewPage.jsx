@@ -68,7 +68,7 @@ export default function CustomerOverview() {
               <StatCard label="New customers" value={formatNumber(k.newCustomers)} tone="info" />
               <StatCard label="Active customers" value={formatNumber(k.customers)} />
               <StatCard label="Invoices created" value={formatNumber(k.invoices)} tone="success" />
-              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} tone="success" />
+              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} sublabel="before tax" tone="success" />
               <StatCard label="Avg invoices / customer" value={formatNumber(k.avgInvoicesPerCustomer)} />
               <StatCard label="Avg revenue / customer" value={formatCurrency(k.avgRevenuePerCustomer)} />
             </div>

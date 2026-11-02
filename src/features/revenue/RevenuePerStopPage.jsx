@@ -5,7 +5,7 @@ import { PageHeader, StatCard } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
-import { defaultRange } from '@/utils/dateRanges';
+import { defaultRange, rangeLabel } from '@/utils/dateRanges';
 import { BarChartCard } from '@/components/charts';
 import { formatCurrency, formatNumber } from '@/utils/format';
 import RouteRevenueModal from './RouteRevenueModal';
@@ -40,7 +40,7 @@ export default function RevenuePerStop() {
 
   return (
     <div>
-      <PageHeader title="Revenue per Stop" subtitle="Actual invoiced revenue ÷ stops (closed invoices), overall and by route." />
+      <PageHeader title="Revenue per Stop" subtitle="Invoiced revenue (before tax) ÷ stops, overall and by route. A stop is one closed invoice, including $0 invoices — not a count of physical visits." />
       <div className="card p-3 mb-5 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} min={opts.data?.earliestDate} max={opts.data?.latestDate} />
         <label className="flex flex-col"><span className="field-label">Route</span>
@@ -55,9 +55,9 @@ export default function RevenuePerStop() {
         {() => (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <StatCard label="Revenue / stop" value={formatCurrency(k.revenuePerStop)} tone="success" />
-              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} />
-              <StatCard label="Stops" value={formatNumber(k.stops)} />
+              <StatCard label="Revenue / stop" value={formatCurrency(k.revenuePerStop)} sublabel="per closed invoice" tone="success" />
+              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} sublabel={`${rangeLabel(range)} · before tax`} />
+              <StatCard label="Stops" value={formatNumber(k.stops)} sublabel="closed invoices, incl. $0" />
               <StatCard label="Routes" value={formatNumber(k.routes)} />
             </div>
             <BarChartCard title="Revenue per stop by route" data={byRoute} xKey="routeCode" bars={[{ key: 'revenuePerStop', label: 'Rev / stop', color: '#2563EB' }]} />

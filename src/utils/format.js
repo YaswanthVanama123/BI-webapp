@@ -10,7 +10,7 @@ export function toNumber(value) {
 
 export function formatCurrency(amount) {
   const n = toNumber(amount);
-  return currencyFormatter.format(n ?? 0);
+  return n === null ? '-' : currencyFormatter.format(n);
 }
 
 export function formatNumber(value) {

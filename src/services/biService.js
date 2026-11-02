@@ -30,6 +30,9 @@ const biService = {
   serviceVsDriveTime: (f) => get('/service-vs-drive-time', f),
   closedInvoices: (f) => get('/invoices', f),
   invoiceDetail: (invoiceNumber) => get(`/invoices/${encodeURIComponent(invoiceNumber)}`),
+  refreshInvoiceLines: (body) => post('/invoices/refresh-lines', body || {}, { timeout: 60000 }),
+  invoiceRefreshStatus: () => get('/invoices/refresh-lines/status'),
+  routeUsers: () => get('/route-users'),
 
   revenueByCategory: (f) => get('/revenue/by-category', f),
   revenueCategoryDetail: (f) => get('/revenue/category-detail', f),

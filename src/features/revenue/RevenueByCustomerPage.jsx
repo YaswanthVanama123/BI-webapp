@@ -5,7 +5,7 @@ import { PageHeader, StatCard, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
-import { defaultRange } from '@/utils/dateRanges';
+import { defaultRange, rangeLabel } from '@/utils/dateRanges';
 import { BarChartCard } from '@/components/charts';
 import { formatCurrency, formatNumber, formatPercent } from '@/utils/format';
 import CustomerRevenueModal from './CustomerRevenueModal';
@@ -55,7 +55,7 @@ export default function RevenueByCustomer() {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {isAllTime && <StatCard label="Expected (yr)" value={formatCurrency(k.expected)} tone="info" />}
-              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} tone="success" />
+              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} sublabel={`${rangeLabel(range)} · before tax`} tone="success" />
               {isAllTime && <StatCard label="Remaining" value={formatCurrency(k.remaining)} tone={k.remaining > 0 ? 'warning' : 'success'} />}
               {isAllTime
                 ? <StatCard label="Collected" value={k.collectedPct != null ? formatPercent(k.collectedPct) : '—'} sublabel={`${formatNumber(k.customers)} customers`} tone={pctTone(k.collectedPct)} />

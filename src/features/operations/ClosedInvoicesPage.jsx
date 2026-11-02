@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import useApi from '@/hooks/useApi';
 import biService from '@/services/biService';
 import { PageHeader, Badge, Modal, Spinner } from '@/components/ui';
@@ -7,6 +8,7 @@ import DataTable from '@/components/ui/DataTable';
 import DateRangeFilter from '@/components/filters/DateRangeFilter';
 import RouteTabs from '@/components/filters/RouteTabs';
 import { formatCurrency, formatDateShort, formatNumber, statusTone } from '@/utils/format';
+import LineStatusNotice from '@/features/revenue/LineStatusNotice';
 
 const columns = [
   { key: 'invoiceNumber', header: 'Invoice #' },
@@ -74,6 +76,7 @@ function InvoiceDetailModal({ invoiceNumber, onClose }) {
               <Field label="Signed by">{data.signedBy}</Field>
             </div>
           )}
+          <LineStatusNotice invoice={data} />
           <div>
             <div className="text-sm font-semibold text-dark-800 mb-2">Items ({data.lineItems.length})</div>
             <DataTable columns={lineColumns} rows={data.lineItems} exportFilename={`invoice-${invoiceNumber}-lines`} paginated={false} />
@@ -81,6 +84,57 @@ function InvoiceDetailModal({ invoiceNumber, onClose }) {
         </div>
       )}
     </Modal>
+  );
+}
+
+function LineRefreshBar({ onDone }) {
+  const [status, setStatus] = useState(null);
+  const [note, setNote] = useState(null);
+  const pollRef = useRef(null);
+  const job = status && status.job;
+  const health = status && status.health;
+  const running = !!(job && job.running);
+
+  const fetchStatus = useCallback(async () => {
+    try { const res = await biService.invoiceRefreshStatus(); setStatus(res?.data || null); return res?.data || null; }
+    catch (e) { void e; return null; }
+  }, []);
+
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+
+  useEffect(() => {
+    if (!running) return undefined;
+    pollRef.current = setInterval(async () => {
+      const s = await fetchStatus();
+      if (s && s.job && !s.job.running) { clearInterval(pollRef.current); onDone(); }
+    }, 4000);
+    return () => clearInterval(pollRef.current);
+  }, [running, fetchStatus, onDone]);
+
+  const start = async () => {
+    setNote(null);
+    try {
+      const res = await biService.refreshInvoiceLines();
+      const d = res?.data || {};
+      if (d.busy) setNote(`RouteStar is busy with another sync (${d.busy}) — try again when it finishes.`);
+      if (d.job) setStatus((s) => ({ ...(s || {}), job: d.job }));
+    } catch (e) { setNote(e?.message || 'Could not start the refresh.'); }
+  };
+
+  let text = 'Checking invoice line items…';
+  if (running) text = `Re-reading line items from RouteStar: ${formatNumber((job.refreshed || 0) + (job.failed || 0))} of ${formatNumber(job.total || 0)} done (${formatNumber(job.fixed || 0)} now match their subtotal).`;
+  else if (health && health.mismatched) text = `${formatNumber(health.mismatched)} invoices have line items that don't add up to their subtotal (${formatCurrency(health.mismatchAmount)} in total). Revenue totals use the subtotal; refresh to re-read those lines from RouteStar.`;
+  else if (health) text = `All invoice line items add up to their subtotal${health.refreshed ? ` (${formatNumber(health.refreshed)} re-read from RouteStar)` : ''}.`;
+  const last = job && !running && job.phase === 'done' ? ` Last refresh: ${formatNumber(job.refreshed || 0)} re-read, ${formatNumber(job.failed || 0)} failed.` : '';
+  const failed = job && job.phase === 'error' ? ` Last refresh failed: ${job.error}.` : '';
+
+  return (
+    <div className="card p-3 mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="text-sm text-dark-600 min-w-0 flex-1">{text}{last}{failed}{note ? ` ${note}` : ''}</div>
+      <button type="button" className="btn-secondary" disabled={running || !health || !health.pending} onClick={start} title={health && !health.pending ? 'Nothing to refresh' : 'Re-read stale invoices from RouteStar'}>
+        <RefreshCw size={16} className={running ? 'animate-spin' : ''} /> {running ? 'Refreshing…' : 'Refresh stale invoice lines'}
+      </button>
+    </div>
   );
 }
 
@@ -118,6 +172,7 @@ export default function ClosedInvoices() {
       <div className="card p-3 mb-4 flex flex-wrap items-end gap-3">
         <DateRangeFilter value={range} onChange={setRange} />
       </div>
+      <LineRefreshBar onDone={reload} />
       <RouteTabs routes={routes} value={route} onChange={setRoute} allLabel="All" className="mb-4" />
       <AsyncSection loading={loading} error={error} data={data} reload={reload}>
         {() => (

@@ -5,6 +5,7 @@ import { Modal, Badge } from '@/components/ui';
 import AsyncSection from '@/components/ui/AsyncSection';
 import DataTable from '@/components/ui/DataTable';
 import { formatCurrency, formatNumber, formatDateShort, statusTone } from '@/utils/format';
+import LineStatusNotice from './LineStatusNotice';
 
 const lineColumns = [
   { key: 'name', header: 'Item' },
@@ -52,6 +53,7 @@ export default function InvoiceLinesModal({ invoiceNumber, onClose }) {
                 <Field label="Signed by">{d.signedBy}</Field>
               </div>
             )}
+            <LineStatusNotice invoice={d} />
             <div>
               <div className="text-sm font-semibold text-dark-800 mb-2">Items ({d.lineItems ? d.lineItems.length : 0})</div>
               <DataTable columns={lineColumns} rows={d.lineItems || []} exportFilename={`invoice-${invoiceNumber}-lines`} paginated={false} />

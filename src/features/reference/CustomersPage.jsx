@@ -34,7 +34,8 @@ const invoiceColumns = [
   { key: 'checkIn', header: 'Check-in', render: (r) => r.checkIn || '-' },
   { key: 'checkOut', header: 'Check-out', render: (r) => r.checkOut || '-' },
   { key: 'lineCount', header: 'Items', align: 'right', render: (r) => formatNumber(r.lineCount) },
-  { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
+  { key: 'amount', header: 'Revenue', align: 'right', render: (r) => formatCurrency(r.amount) },
+  { key: 'total', header: 'Total incl. tax', align: 'right', render: (r) => formatCurrency(r.total) },
 ];
 const itemColumns = [
   { key: 'item', header: 'Item' },
@@ -99,7 +100,7 @@ function CustomerDetailModal({ customerId, onClose }) {
 
             {dk && (
               <div className="grid grid-cols-3 gap-3">
-                <StatCard label="Invoiced (all time)" value={formatCurrency(dk.invoiced)} tone="success" />
+                <StatCard label="Invoiced (all time)" value={formatCurrency(dk.invoiced)} sublabel="before tax" tone="success" />
                 <StatCard label="Invoices" value={formatNumber(dk.stops)} />
                 <StatCard label="Items" value={formatNumber(dk.items)} />
               </div>

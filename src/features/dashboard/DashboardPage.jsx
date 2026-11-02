@@ -49,11 +49,11 @@ export default function Dashboard() {
         {() => (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-              <StatCard label="Invoiced revenue" value={formatCurrency(rk?.invoiced || 0)} sublabel={rk ? `expected ${formatCurrency(rk.expected)}` : ''} tone="success" />
-              <StatCard label="Stops" value={formatNumber(vk?.stops || rk?.stops || 0)} sublabel={`${formatNumber(vk?.routes || rk?.routes || 0)} routes`} tone="info" />
-              <StatCard label="Revenue / stop" value={formatCurrency(vk?.stops && rk?.invoiced ? rk.invoiced / vk.stops : 0)} />
-              <StatCard label="Avg utilization" value={formatPercent(uk?.avgUtilizationPct || 0)} tone={(uk?.avgUtilizationPct || 0) >= 60 ? 'success' : 'warning'} sublabel={`${formatNumber(uk?.technicians || 0)} techs`} />
-              <StatCard label="Idle / paperwork" value={formatMinutes(sk?.idleMinutes || 0)} sublabel={sk ? `${formatPercent(sk.idlePct)} of active` : ''} tone={(sk?.idlePct || 0) > 30 ? 'warning' : 'neutral'} />
+              <StatCard label="Invoiced revenue" value={rk ? formatCurrency(rk.invoiced) : 'Unavailable'} sublabel={rk ? `before tax · expected ${formatCurrency(rk.expected)}` : 'revenue could not be loaded'} tone={rk ? 'success' : 'warning'} />
+              <StatCard label="Stops" value={vk || rk ? formatNumber(vk ? vk.stops : rk.invoices) : 'Unavailable'} sublabel={vk || rk ? `${formatNumber(vk ? vk.routes : rk.routes)} routes` : 'stops could not be loaded'} tone="info" />
+              <StatCard label="Revenue / stop" value={rk && vk ? formatCurrency(vk.stops ? rk.invoiced / vk.stops : 0) : 'Unavailable'} sublabel="before tax" />
+              <StatCard label="Avg utilization" value={uk ? formatPercent(uk.avgUtilizationPct) : 'Unavailable'} tone={uk && uk.avgUtilizationPct >= 60 ? 'success' : 'warning'} sublabel={uk ? `${formatNumber(uk.technicians)} techs` : 'could not be loaded'} />
+              <StatCard label="Idle / paperwork" value={sk ? formatMinutes(sk.idleMinutes) : 'Unavailable'} sublabel={sk ? `${formatPercent(sk.idlePct)} of active` : 'could not be loaded'} tone={sk && sk.idlePct > 30 ? 'warning' : 'neutral'} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

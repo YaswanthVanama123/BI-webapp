@@ -20,7 +20,8 @@ const invoiceColumns = [
   { key: 'checkIn', header: 'Check-in', render: (r) => r.checkIn || '-' },
   { key: 'checkOut', header: 'Check-out', render: (r) => r.checkOut || '-' },
   { key: 'lineCount', header: 'Items', align: 'right', render: (r) => formatNumber(r.lineCount) },
-  { key: 'total', header: 'Total', align: 'right', render: (r) => formatCurrency(r.total) },
+  { key: 'amount', header: 'Revenue', align: 'right', render: (r) => formatCurrency(r.amount) },
+  { key: 'total', header: 'Total incl. tax', align: 'right', render: (r) => formatCurrency(r.total) },
 ];
 const itemColumns = [
   { key: 'item', header: 'Item' },
@@ -61,7 +62,7 @@ export default function DrillModal({ title, subtitle, filter, range, onClose, de
         {() => (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} tone="success" />
+              <StatCard label="Invoiced" value={formatCurrency(k.invoiced)} sublabel={k.billed != null ? `before tax · ${formatCurrency(k.billed)} billed` : 'before tax'} tone="success" />
               <StatCard label="Stops" value={formatNumber(k.stops)} />
               {showCustomers && <StatCard label="Customers" value={formatNumber(k.customers)} />}
               <StatCard label="Items" value={formatNumber(k.items)} />

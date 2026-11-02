@@ -69,7 +69,9 @@ const exportColumns = [
   { key: 'date', header: 'Date' },
   { key: 'stops', header: 'Stops' },
   { key: 'avgServiceMinutes', header: 'Avg time per stop (min)' },
-  { key: 'revenue', header: 'Revenue' },
+  { key: 'revenue', header: 'Revenue (before tax)' },
+  { key: 'tax', header: 'Tax' },
+  { key: 'billed', header: 'Billed incl. tax' },
   { key: 'utilizationPct', header: 'Utilization %' },
   { key: 'serviceMinutes', header: 'On-site (min)' },
   { key: 'spanMinutes', header: 'Day span (min)' },
@@ -192,6 +194,7 @@ function WeekCell({ summary }) {
 
 export default function RouteCalendar() {
   const opts = useApi(() => biService.checkinOptions(), []);
+  const users = useApi(() => biService.routeUsers(), []);
   const [routeCode, setRouteCode] = useState('');
   const [month, setMonth] = useState(null);
   const [day, setDay] = useState(null);
@@ -221,9 +224,11 @@ export default function RouteCalendar() {
   const fresh = !!data && data.from === from && data.to === to && (data.routeCode || '') === routeCode.toUpperCase();
   const busy = loading || opts.loading || !fresh;
   const shownMonth = data ? data.from.slice(0, 7) : activeMonth;
-  const shownRoute = (data && data.routeCode) || 'All routes';
+  const userOf = useMemo(() => new Map(((users.data) || []).map((u) => [u.routeCode, u.name])), [users.data]);
+  const withUser = (code) => (userOf.get(code) ? `${code} · ${userOf.get(code)}` : code);
+  const shownRoute = data && data.routeCode ? withUser(data.routeCode) : 'All routes';
 
-  const routeOptions = useMemo(() => ((opts.data && opts.data.routes) || []).map((r) => ({ value: r, label: r })), [opts.data]);
+  const routeOptions = useMemo(() => ((opts.data && opts.data.routes) || []).map((r) => ({ value: r, label: userOf.get(r) ? `${r} · ${userOf.get(r)}` : r })), [opts.data, userOf]);
   const monthChoices = useMemo(() => monthOptions(earliest ? earliest.slice(0, 7) : null, maxMonth), [earliest, maxMonth]);
   const days = useMemo(() => (data && data.days) || [], [data]);
   const byDate = useMemo(() => new Map(days.map((d) => [d.date, d])), [days]);
@@ -266,7 +271,7 @@ export default function RouteCalendar() {
                 <KpiCard icon={CalendarCheck} tone="info" label="Days worked" value={formatNumber(k.days)} sub={monthTitle(shownMonth)} />
                 <KpiCard icon={MapPin} tone="info" label="Stops" value={formatNumber(k.stops)} sub={`${formatNumber(k.avgStopsPerDay)} per day`} />
                 <KpiCard icon={Clock} tone="neutral" label="Avg time / stop" value={formatMinutes(k.avgServiceMinutes)} sub="on-site per stop" />
-                <KpiCard icon={DollarSign} tone="success" label="Revenue" value={formatCurrency(k.revenue)} sub={`${formatCurrency(k.avgRevenuePerDay)} per day`} />
+                <KpiCard icon={DollarSign} tone="success" label="Revenue" value={formatCurrency(k.revenue)} sub={`${formatCurrency(k.avgRevenuePerDay)} per day · before tax`} />
                 <KpiCard icon={Gauge} tone={utilTone(k.utilizationPct)} label="Utilization" value={formatPercent(k.utilizationPct)} sub="on-site ÷ day span" progress={k.utilizationPct} />
               </div>
 
